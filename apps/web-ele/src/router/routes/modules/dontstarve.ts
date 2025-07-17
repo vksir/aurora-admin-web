@@ -11,40 +11,53 @@ const routes: RouteRecordRaw[] = [
     path: '/donstarve',
     children: [
       {
-        name: 'Room',
-        path: '/donstarve/room',
-        component: () => import('#/views/dontstarve/room/index.vue'),
+        name: 'Donstarve Dashboard',
+        path: '/donstarve/dashboard',
+        component: () => import('#/views/dontstarve/dashboard/index.vue'),
         meta: {
           icon: 'lucide:area-chart',
-          title: '房间设置',
+          title: '控制台',
         },
       },
       {
-        name: 'World',
-        path: '/donstarve/world',
-        component: () => import('#/views/dontstarve/world/index.vue'),
-        meta: {
-          icon: 'lucide:area-chart',
-          title: '世界设置',
-        },
-      },
-      {
-        name: 'Server',
-        path: '/donstarve/server',
-        component: () => import('#/views/dontstarve/server/index.vue'),
-        meta: {
-          icon: 'lucide:area-chart',
-          title: '服务设置',
-        },
-      },
-      {
-        name: 'Mod',
+        name: 'Donstarve Mod',
         path: '/donstarve/mod',
         component: () => import('#/views/dontstarve/mod/index.vue'),
         meta: {
           icon: 'lucide:area-chart',
           title: '模组设置',
         },
+      },
+      {
+        name: 'Donstarve Archive',
+        path: '/donstarve/archive',
+        meta: {
+          icon: 'lucide:area-chart',
+          title: '存档管理',
+        },
+        children: [
+          {
+            name: 'Donstarve Archive Manage',
+            path: '/donstarve/archive',
+            component: () => import('#/views/dontstarve/archive/index.vue'),
+            meta: {
+              icon: 'lucide:area-chart',
+              title: '存档管理',
+              hideInMenu: true,
+              hideInBreadcrumb: true,
+            },
+          },
+          {
+            name: 'Donstarve Archive Setting',
+            path: '/donstarve/archive/setting',
+            component: () => import('#/views/dontstarve/archive/ArchiveSetting.vue'),
+            meta: {
+              icon: 'lucide:area-chart',
+              title: '存档设置',
+              hideInMenu: true,
+            },
+          },
+        ]
       },
     ],
   },

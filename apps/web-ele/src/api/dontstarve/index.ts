@@ -1,37 +1,47 @@
-import type {
-  Control,
-  DontStarveArchive,
-  DontStarveConfig,
-  Status,
-} from '@vben/types';
+import type {Control, DontStarveArchive, DontStarveConfig, Status,} from '@vben/types';
 
-import { requestClient } from '#/api/request';
+import {requestClient} from '#/api/request';
+import {ElNotification} from "element-plus";
+
 
 export async function getStatus() {
   return requestClient.get<Status>('/dontstarve/status');
 }
 
-export interface CreateControlRequest extends Control {}
+export interface CreateControlRequest extends Control {
+}
 
 export async function createControl(data: CreateControlRequest) {
   return requestClient.post('/dontstarve/control', data);
 }
 
-export interface UpdateConfigRequest extends DontStarveConfig {}
+export interface UpdateConfigRequest extends DontStarveConfig {
+}
 
 export async function getConfig() {
   return requestClient.get<DontStarveConfig>('/dontstarve/config');
 }
 
 export async function updateConfig(data: UpdateConfigRequest) {
-  return requestClient.put<DontStarveConfig>('/dontstarve/config', data);
+  return requestClient.put<DontStarveConfig>('/dontstarve/config', data)
+    .then((data) => {
+      ElNotification({
+        title: '成功',
+        message: '更新设置成功',
+        type: 'success',
+      })
+      return data;
+    })
 }
 
-export interface ListArchiveRequest {}
+export interface ListArchiveRequest {
+}
 
-export interface CreateArchiveRequest {}
+export interface CreateArchiveRequest {
+}
 
-export interface UpdateArchiveRequest extends DontStarveArchive {}
+export interface UpdateArchiveRequest extends DontStarveArchive {
+}
 
 export async function getArchive(id: string) {
   return requestClient.get<DontStarveArchive>(`/dontstarve/archive/${id}`);
@@ -48,12 +58,28 @@ export async function createArchive(data: CreateArchiveRequest) {
 }
 
 export async function updateArchive(id: string, data: UpdateArchiveRequest) {
-  return requestClient.put<DontStarveArchive>(
-    `/dontstarve/archive/${id}`,
-    data,
-  );
+  return await requestClient.put<DontStarveArchive>(`/dontstarve/archive/${id}`, data)
+    .then((data) => {
+      ElNotification({
+        title: '成功',
+        message: '更新存档成功',
+        type: 'success',
+      })
+      return data;
+    })
 }
 
 export async function deleteArchive(id: string) {
-  return requestClient.delete(`/dontstarve/archive/${id}`);
+  return requestClient.delete(`/dontstarve/archive/${id}`).then((data) => {
+    ElNotification({
+      title: '成功',
+      message: '删除存档成功',
+      type: 'success',
+    })
+    return data;
+  });
+}
+
+export function uploadArchive() {
+  return '/api/dontstarve/archive/transfer';
 }
