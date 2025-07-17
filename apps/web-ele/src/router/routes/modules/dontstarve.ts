@@ -1,4 +1,4 @@
-import type { RouteRecordRaw } from 'vue-router';
+import type {RouteRecordRaw} from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -7,39 +7,52 @@ const routes: RouteRecordRaw[] = [
       order: -1,
       title: '饥荒',
     },
-    name: 'Donstarve',
-    path: '/donstarve',
+    name: 'Dontstarve',
+    path: '/dontstarve',
     children: [
       {
-        name: 'Room',
-        path: '/donstarve/room',
-        component: () => import('#/views/dontstarve/room/index.vue'),
+        name: 'Dontstarve Dashboard',
+        path: '/dontstarve/dashboard',
+        component: () => import('#/views/dontstarve/dashboard/index.vue'),
         meta: {
           icon: 'lucide:area-chart',
-          title: '房间设置',
+          title: '控制台',
         },
       },
       {
-        name: 'World',
-        path: '/donstarve/world',
-        component: () => import('#/views/dontstarve/world/index.vue'),
+        name: 'Dontstarve Archive',
+        path: '/dontstarve/archive',
         meta: {
           icon: 'lucide:area-chart',
-          title: '世界设置',
+          title: '存档管理',
         },
+        children: [
+          {
+            name: 'Dontstarve Archive Manage',
+            path: '/dontstarve/archive',
+            component: () => import('#/views/dontstarve/archive/index.vue'),
+            meta: {
+              icon: 'lucide:area-chart',
+              title: '存档管理',
+              hideInMenu: true,
+              hideInBreadcrumb: true,
+            },
+          },
+          {
+            name: 'Dontstarve Archive Setting',
+            path: '/dontstarve/archive/setting',
+            component: () => import('#/views/dontstarve/archive/ArchiveSetting.vue'),
+            meta: {
+              icon: 'lucide:area-chart',
+              title: '存档设置',
+              hideInMenu: true,
+            },
+          },
+        ]
       },
       {
-        name: 'Server',
-        path: '/donstarve/server',
-        component: () => import('#/views/dontstarve/server/index.vue'),
-        meta: {
-          icon: 'lucide:area-chart',
-          title: '服务设置',
-        },
-      },
-      {
-        name: 'Mod',
-        path: '/donstarve/mod',
+        name: 'Dontstarve Mod',
+        path: '/dontstarve/mod',
         component: () => import('#/views/dontstarve/mod/index.vue'),
         meta: {
           icon: 'lucide:area-chart',

@@ -17,6 +17,8 @@ import App from './app.vue';
 import { router } from './router';
 
 import 'element-plus/dist/index.css';
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+
 
 async function bootstrap(namespace: string) {
   // 初始化组件适配器
@@ -56,6 +58,9 @@ async function bootstrap(namespace: string) {
   // 配置路由及路由守卫
   app.use(router);
   app.use(ElementPlus);
+  for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, component)
+  }
 
   // 配置Motion插件
   const { MotionPlugin } = await import('@vben/plugins/motion');
