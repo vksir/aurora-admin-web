@@ -6,6 +6,11 @@ export default defineConfig(async () => {
   return {
     application: {},
     vite: {
+      build: {
+        // aurora-admin 和 aurora-admin 需放在同级目录
+        outDir: '../../../aurora-admin/assets/web/dist',
+        emptyOutDir: true,
+      },
       plugins: [
         ElementPlus({
           format: 'esm',
