@@ -42,12 +42,12 @@ const archiveRef = defineModel<DontStarveArchive>();
               @change="emit('has-changed')"
             />
           </el-descriptions-item>
-          <el-descriptions-item label="房间密码">
-            <el-input
-              v-model="archiveRef.cluster_password"
-              @change="emit('has-changed')"
-            />
-          </el-descriptions-item>
+<!--          <el-descriptions-item label="房间密码">-->
+<!--            <el-input-->
+<!--              v-model="archiveRef.cluster_password"-->
+<!--              @change="emit('has-changed')"-->
+<!--            />-->
+<!--          </el-descriptions-item>-->
           <el-descriptions-item label="最大玩家数">
             <el-input-number
               v-model="archiveRef.max_players"
