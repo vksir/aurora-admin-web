@@ -99,7 +99,7 @@ onMounted(() => {
   fetchAdmins();
   statusTimer = setInterval(() => {
     fetchStatus();
-  }, 3000);
+  }, 5000);
 });
 
 onUnmounted(() => {
@@ -452,8 +452,11 @@ function navigateToArchive() {
 
     <el-dialog v-model="playerDialogVisible" title="当前在线玩家" width="600px">
       <el-table :data="players" border style="width: 100%">
-        <el-table-column prop="name" label="名称" />
-        <el-table-column prop="klei_id" label="Klei ID" />
+        <el-table-column label="名称">
+          <template #default="{ row }">
+            {{ row }}
+          </template>
+        </el-table-column>
       </el-table>
     </el-dialog>
   </Page>

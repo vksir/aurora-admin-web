@@ -8,6 +8,7 @@ import {
   listArchive,
   updateConfig,
   uploadArchive,
+  createArchive,
 } from '#/api/dontstarve';
 import { convertTime, copyToClipboard } from '#/util';
 import { useRoute, useRouter } from 'vue-router';
@@ -33,7 +34,10 @@ async function initialize() {
   archiveListRef.value = await listArchive({});
 }
 
-async function innerCreateArchive() {}
+async function innerCreateArchive() {
+  await createArchive({});
+  await initialize();
+}
 
 async function enableArchive(id: string) {
   if (configRef.value) {

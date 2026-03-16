@@ -12,7 +12,7 @@ export interface CreateControlRequest extends Control {
 }
 
 export async function createControl(data: CreateControlRequest) {
-  return requestClient.post('/dontstarve/control', data).then((response) => {
+  return requestClient.post(`/dontstarve/${data.action}`).then((response) => {
     let msg = '';
     switch (data.action) {
       case 'restart':
