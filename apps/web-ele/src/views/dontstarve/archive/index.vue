@@ -25,6 +25,7 @@ const route = useRoute();
 const router = useRouter();
 const uploadDialogVisibleRef = ref(false);
 const uploadDialogLoadingRef = ref(false);
+const uploadIdRef = ref<string>();
 const uploadRef = ref<UploadInstance>();
 const uploadFileListRef = ref<UploadUserFile[]>();
 onMounted(initialize);
@@ -88,6 +89,12 @@ async function uploadDialogResult(response: any, success: boolean) {
     });
   }
 }
+
+function openUploadDialog(id?: string) {
+  uploadIdRef.value = id;
+  uploadFileListRef.value = [];
+  uploadDialogVisibleRef.value = true;
+}
 </script>
 
 <template>
@@ -98,7 +105,7 @@ async function uploadDialogResult(response: any, success: boolean) {
           <el-upload
             v-model:file-list="uploadFileListRef"
             drag
-            :action="uploadArchive()"
+            :action="uploadArchive(uploadIdRef)"
             :auto-upload="false"
             ref="uploadRef"
             :on-success="(response) => uploadDialogResult(response, true)"
@@ -131,7 +138,7 @@ async function uploadDialogResult(response: any, success: boolean) {
       </el-dialog>
       <el-button-group>
         <el-button
-          @click="uploadDialogVisibleRef = true"
+          @click="openUploadDialog()"
           :loading="uploadDialogLoadingRef"
           :loading-icon="Eleme"
           type="primary"
@@ -139,9 +146,7 @@ async function uploadDialogResult(response: any, success: boolean) {
           <span v-if="uploadDialogLoadingRef"> 正在上传 </span>
           <span v-else> 上传存档 </span>
         </el-button>
-        <el-button type="primary" @click="innerCreateArchive"
-          >创建存档</el-button
-        >
+        <el-button @click="innerCreateArchive">创建存档</el-button>
       </el-button-group>
     </template>
 
@@ -183,6 +188,7 @@ async function uploadDialogResult(response: any, success: boolean) {
                   <el-button>下载</el-button>
                 </template>
               </el-popconfirm>
+              <el-button @click="openUploadDialog(item.id)">更新</el-button>
               <el-button @click="settingArchive(item.id)">设置</el-button>
               <el-popconfirm
                 title="确认删除存档？"

@@ -32,6 +32,7 @@ interface DontStarveMod extends Model {
   author: string
   version: string
   config: DontStarveModConfig[]
+  raw_config: string
   download: boolean
 }
 

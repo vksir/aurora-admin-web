@@ -222,6 +222,9 @@ function navigateToArchive() {
         <el-button @click="handleAction('restart')" :loading="loading"
           >重启服务器</el-button
         >
+        <el-button @click="handleAction('restart')" :loading="loading"
+          >更新模组</el-button
+        >
         <el-button @click="handleAction('update')" :loading="loading"
           >更新服务器</el-button
         >

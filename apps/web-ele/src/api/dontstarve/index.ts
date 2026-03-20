@@ -109,15 +109,35 @@ export async function deleteArchive(id: string) {
     });
 }
 
-export function uploadArchive() {
+export function uploadArchive(id?: string) {
+  if (id) {
+    return `/api/dontstarve/archive/upload/${id}`;
+  }
   return '/api/dontstarve/archive/upload';
 }
 
 export interface ListModRequest {
 }
 
+export interface DontStarveMod {
+  id: string;
+  name: string;
+  author: string;
+  version: string;
+  description: string;
+  image: string;
+  downloaded: boolean;
+  workshop_id: string;
+  time_created: number;
+  time_updated: number;
+  raw_config: string;
+  config: any[];
+  created_at: string;
+  updated_at: string;
+}
+
 export async function listMod(data: ListModRequest) {
-  return requestClient.get<any[]>('/dontstarve/mod', {
+  return requestClient.get<DontStarveMod[]>('/dontstarve/mod', {
     params: data,
   });
 }

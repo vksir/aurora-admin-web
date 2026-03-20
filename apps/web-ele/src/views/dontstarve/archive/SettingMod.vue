@@ -1,23 +1,30 @@
 <script lang="ts" setup>
 import type { DontStarveArchive } from '@vben/types';
-import ModCard from '../components/ModCard.vue';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import { listMod } from '#/api/dontstarve';
+import type { DontStarveMod } from '#/api/dontstarve';
 
 const emit = defineEmits(['has-changed']);
 const archiveRef = defineModel<DontStarveArchive>();
 
 const settingsDialogVisible = ref(false);
-const currentMod = ref<any>(null);
+const currentMod = ref<DontStarveMod | null>(null);
+const allMods = ref<DontStarveMod[]>([]);
+const loading = ref(false);
 
-function openModSettings(mod: any) {
+onMounted(() => {
+  loadAllMods();
+});
+
+function openModSettings(mod: DontStarveMod) {
   currentMod.value = JSON.parse(JSON.stringify(mod));
   settingsDialogVisible.value = true;
 }
 
 function saveModSettings() {
   const index = archiveRef.value?.edges?.mods?.findIndex(
-    (m) => m.id === currentMod.value.id,
+    (m) => m.workshop_id === currentMod.value.workshop_id,
   );
   if (
     index !== undefined &&
@@ -28,34 +35,135 @@ function saveModSettings() {
     archiveRef.value.edges.mods[index].raw_config = currentMod.value.raw_config;
     ElMessage.success('保存模组设置成功');
     emit('has-changed');
+  } else {
+    // If not in archive yet, just update the local mod config so it gets added properly when checked
+    const modInAll = allMods.value.find(
+      (m) => m.workshop_id === currentMod.value.workshop_id,
+    );
+    if (modInAll) {
+      modInAll.raw_config = currentMod.value.raw_config;
+      ElMessage.success('暂存模组设置成功');
+    }
   }
   settingsDialogVisible.value = false;
 }
 
-async function deleteModFromArchive(index: number) {
-  if (archiveRef.value && archiveRef.value.edges?.mods) {
-    archiveRef.value.edges.mods.splice(index, 1);
+import { nextTick } from 'vue';
+
+const modTable = ref<any>(null);
+
+function handleSelectionChange(selection: DontStarveMod[]) {
+  if (archiveRef.value) {
+    if (!archiveRef.value.edges) {
+      archiveRef.value.edges = {};
+    }
+    // Only update if selection is initiated by user, not initial load
+    // But since it's hard to distinguish, we'll just update it
+    archiveRef.value.edges.mods = JSON.parse(JSON.stringify(selection));
     emit('has-changed');
+  }
+}
+
+const getRowKey = (row: DontStarveMod) => {
+  return row.workshop_id;
+};
+
+async function loadAllMods() {
+  loading.value = true;
+  try {
+    const res = await listMod({});
+    allMods.value = res || [];
+
+    // Set initial selection
+    await nextTick();
+    if (archiveRef.value?.edges?.mods && modTable.value) {
+      const rowsToSelect: DontStarveMod[] = [];
+      archiveRef.value.edges.mods.forEach((mod: any) => {
+        // Use Number conversion to match strictly in case of string vs number
+        const row = allMods.value.find(
+          (m) => String(m.workshop_id) === String(mod.workshop_id),
+        );
+        if (row) {
+          // Restore raw_config from archive to allMods so settings reflect current state
+          row.raw_config = mod.raw_config;
+          rowsToSelect.push(row);
+        }
+      });
+
+      rowsToSelect.forEach((row) => {
+        modTable.value.toggleRowSelection(row, true);
+      });
+    }
+  } catch (error) {
+    ElMessage.error('加载模组列表失败');
+  } finally {
+    loading.value = false;
   }
 }
 </script>
 
 <template>
-  <el-row :gutter="16" v-if="archiveRef?.edges?.mods">
-    <el-col
-      :span="12"
-      v-for="(mod, index) in archiveRef.edges.mods"
-      :key="mod.id"
-      class="mb-4"
-    >
-      <ModCard
-        :item="mod"
-        :show-status="true"
-        @setting="() => openModSettings(mod)"
-        @delete="() => deleteModFromArchive(index)"
-      />
-    </el-col>
-  </el-row>
+  <el-table
+    v-loading="loading"
+    :data="allMods"
+    style="width: 100%"
+    :row-key="getRowKey"
+    @selection-change="handleSelectionChange"
+    ref="modTable"
+  >
+    <el-table-column type="selection" width="55" :reserve-selection="true" />
+    <el-table-column label="图片" width="80">
+      <template #default="scope">
+        <el-image
+          :src="scope.row.image"
+          style="width: 50px; height: 50px; border-radius: 4px"
+          fit="cover"
+        />
+      </template>
+    </el-table-column>
+    <el-table-column prop="name" label="模组名称" min-width="150" />
+    <el-table-column prop="time_created" label="创建时间" min-width="150">
+      <template #default="scope">
+        {{
+          new Date(scope.row.time_created * 1000)
+            .toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false,
+            })
+            .replace(/\//g, '/')
+        }}
+      </template>
+    </el-table-column>
+    <el-table-column prop="time_updated" label="更新时间" min-width="150">
+      <template #default="scope">
+        {{
+          new Date(scope.row.time_updated * 1000)
+            .toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false,
+            })
+            .replace(/\//g, '/')
+        }}
+      </template>
+    </el-table-column>
+    <el-table-column label="操作" width="120" fixed="right">
+      <template #default="scope">
+        <el-button link type="primary" @click="openModSettings(scope.row)">
+          设置
+        </el-button>
+      </template>
+    </el-table-column>
+  </el-table>
 
   <el-dialog v-model="settingsDialogVisible" title="模组设置" width="60%">
     <div v-if="currentMod">
