@@ -23,8 +23,13 @@ function openModSettings(mod: DontStarveMod) {
 }
 
 function saveModSettings() {
+  const mod = currentMod.value;
+  if (!mod) {
+    settingsDialogVisible.value = false;
+    return;
+  }
   const index = archiveRef.value?.mods?.findIndex(
-    (m) => m.workshop_id === currentMod.value.workshop_id,
+    (m) => m.workshop_id === mod.workshop_id,
   );
   if (
     index !== undefined &&
@@ -32,16 +37,19 @@ function saveModSettings() {
     archiveRef.value &&
     archiveRef.value.mods
   ) {
-    archiveRef.value.mods[index].raw_config = currentMod.value.raw_config;
-    ElMessage.success('保存模组设置成功');
-    emit('has-changed');
+    const target = archiveRef.value.mods[index];
+    if (target) {
+      target.raw_config = mod.raw_config;
+      ElMessage.success('保存模组设置成功');
+      emit('has-changed');
+    }
   } else {
     // If not in archive yet, just update the local mod config so it gets added properly when checked
     const modInAll = allMods.value.find(
-      (m) => m.workshop_id === currentMod.value.workshop_id,
+      (m) => m.workshop_id === mod.workshop_id,
     );
     if (modInAll) {
-      modInAll.raw_config = currentMod.value.raw_config;
+      modInAll.raw_config = mod.raw_config;
       ElMessage.success('暂存模组设置成功');
     }
   }

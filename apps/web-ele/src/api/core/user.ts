@@ -12,5 +12,8 @@ export async function getUserInfoApi(): Promise<UserInfo> {
     realName: 'Admin',
     avatar: '',
     roles: [],
-  } as UserInfo;
+    desc: 'aurora-admin 内置管理员',
+    homePath: '/',
+    token: '',
+  };
 }

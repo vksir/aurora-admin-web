@@ -128,8 +128,8 @@ function openUploadDialog(id?: string) {
             :headers="uploadHeaders"
             :auto-upload="false"
             ref="uploadRef"
-            :on-success="(response) => uploadDialogResult(response, true)"
-            :on-error="(response) => uploadDialogResult(response, false)"
+            :on-success="(response: any) => uploadDialogResult(response, true)"
+            :on-error="(response: any) => uploadDialogResult(response, false)"
           >
             <el-icon class="el-icon--upload">
               <upload-filled />
