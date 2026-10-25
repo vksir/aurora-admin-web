@@ -131,7 +131,7 @@ catalog:
   playwright: ^1.52.0
   postcss: ^8.5.3
   postcss-antd-fixes: ^0.2.0
-  postcss-html: ^1.8.0
+  postcss-html: ^2.0.0
   postcss-import: ^16.1.0
   postcss-preset-env: ^10.1.6
   postcss-scss: ^4.0.9
