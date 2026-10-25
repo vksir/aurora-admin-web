@@ -23,16 +23,16 @@ function openModSettings(mod: DontStarveMod) {
 }
 
 function saveModSettings() {
-  const index = archiveRef.value?.edges?.mods?.findIndex(
+  const index = archiveRef.value?.mods?.findIndex(
     (m) => m.workshop_id === currentMod.value.workshop_id,
   );
   if (
     index !== undefined &&
     index > -1 &&
     archiveRef.value &&
-    archiveRef.value.edges?.mods
+    archiveRef.value.mods
   ) {
-    archiveRef.value.edges.mods[index].raw_config = currentMod.value.raw_config;
+    archiveRef.value.mods[index].raw_config = currentMod.value.raw_config;
     ElMessage.success('保存模组设置成功');
     emit('has-changed');
   } else {
@@ -54,12 +54,12 @@ const modTable = ref<any>(null);
 
 function handleSelectionChange(selection: DontStarveMod[]) {
   if (archiveRef.value) {
-    if (!archiveRef.value.edges) {
-      archiveRef.value.edges = {};
+    if (!archiveRef.value.mods) {
+      archiveRef.value.mods = [];
     }
     // Only update if selection is initiated by user, not initial load
     // But since it's hard to distinguish, we'll just update it
-    archiveRef.value.edges.mods = JSON.parse(JSON.stringify(selection));
+    archiveRef.value.mods = JSON.parse(JSON.stringify(selection));
     emit('has-changed');
   }
 }
@@ -76,9 +76,9 @@ async function loadAllMods() {
 
     // Set initial selection
     await nextTick();
-    if (archiveRef.value?.edges?.mods && modTable.value) {
+    if (archiveRef.value?.mods && modTable.value) {
       const rowsToSelect: DontStarveMod[] = [];
-      archiveRef.value.edges.mods.forEach((mod: any) => {
+      archiveRef.value.mods.forEach((mod: any) => {
         // Use Number conversion to match strictly in case of string vs number
         const row = allMods.value.find(
           (m) => String(m.workshop_id) === String(mod.workshop_id),

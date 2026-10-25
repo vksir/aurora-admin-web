@@ -44,6 +44,14 @@ interface RouteMeta {
     | 'warning'
     | string;
   /**
+   * 路由对应dom是否缓存起来
+   */
+  domCached?: boolean;
+  /**
+   * 路由的完整路径作为key（默认true）
+   */
+  fullPathKey?: boolean;
+  /**
    * 当前路由的子级在菜单中不展现
    * @default false
    */

@@ -15,6 +15,7 @@ import {
   regenerate,
   rollback,
   listPlayer,
+  updateMods,
 } from '#/api/dontstarve';
 import type { DontStarveArchive, DontStarveConfig } from '@vben/types';
 import { computed } from 'vue';
@@ -133,6 +134,17 @@ async function saveSettings() {
   }
 }
 
+async function handleUpdateMods() {
+  try {
+    loading.value = true;
+    await updateMods();
+  } catch {
+    ElMessage.error('触发模组更新失败');
+  } finally {
+    loading.value = false;
+  }
+}
+
 async function viewPlayers() {
   try {
     players.value = await listPlayer();
@@ -222,7 +234,7 @@ function navigateToArchive() {
         <el-button @click="handleAction('restart')" :loading="loading"
           >重启服务器</el-button
         >
-        <el-button @click="handleAction('restart')" :loading="loading"
+        <el-button @click="handleUpdateMods" :loading="loading"
           >更新模组</el-button
         >
         <el-button @click="handleAction('update')" :loading="loading"

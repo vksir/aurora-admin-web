@@ -5,7 +5,6 @@ import {
   h,
   inject,
   nextTick,
-  onDeactivated,
   provide,
   reactive,
   ref,
@@ -42,6 +41,7 @@ export function useVbenModal<TParentModalProps extends ModalProps = ModalProps>(
             // 不能用 Object.assign,会丢失 api 的原型函数
             Object.setPrototypeOf(extendedApi, api);
           },
+          consumed: false,
           options,
           async reCreateModal() {
             isModalReady.value = false;
@@ -71,17 +71,16 @@ export function useVbenModal<TParentModalProps extends ModalProps = ModalProps>(
       },
     );
 
-    /**
-     * 在开启keepAlive情况下 直接通过浏览器按钮/手势等返回 不会关闭弹窗
-     */
-    onDeactivated(() => {
-      (extendedApi as ExtendedModalApi)?.close?.();
-    });
-
     return [Modal, extendedApi as ExtendedModalApi] as const;
   }
 
-  const injectData = inject<any>(USER_MODAL_INJECT_KEY, {});
+  let injectData = inject<any>(USER_MODAL_INJECT_KEY, {});
+  // 这个数据已经被使用了，说明这个弹窗是嵌套的弹窗，不应该merge上层的配置
+  if (injectData.consumed) {
+    injectData = {};
+  } else {
+    injectData.consumed = true;
+  }
 
   const mergedOptions = {
     ...DEFAULT_MODAL_PROPS,
@@ -94,9 +93,11 @@ export function useVbenModal<TParentModalProps extends ModalProps = ModalProps>(
     injectData.options?.onOpenChange?.(isOpen);
   };
 
+  const onClosed = mergedOptions.onClosed;
   mergedOptions.onClosed = () => {
-    options.onClosed?.();
+    onClosed?.();
     if (mergedOptions.destroyOnClose) {
+      injectData.consumed = false;
       injectData.reCreateModal?.();
     }
   };
@@ -129,6 +130,7 @@ export function useVbenModal<TParentModalProps extends ModalProps = ModalProps>(
     },
   );
   injectData.extendApi?.(extendedApi);
+
   return [Modal, extendedApi] as const;
 }
 

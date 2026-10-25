@@ -3,12 +3,14 @@ import type { DontStarveArchive, DontStarveConfig } from '@vben/types';
 import { onMounted, ref } from 'vue';
 import { Page } from '@vben/common-ui';
 import {
+  createArchive,
   deleteArchive,
+  downloadArchive as downloadArchiveApi,
   getConfig,
   listArchive,
   updateConfig,
   uploadArchive,
-  createArchive,
+  uploadArchiveMethod,
 } from '#/api/dontstarve';
 import { convertTime, copyToClipboard } from '#/util';
 import { useRoute, useRouter } from 'vue-router';
@@ -19,8 +21,16 @@ import {
   type UploadUserFile,
 } from 'element-plus';
 
+import { useAccessStore } from '@vben/stores';
+import { computed } from 'vue';
+
 const configRef = ref<DontStarveConfig>();
 const archiveListRef = ref<DontStarveArchive[]>();
+const accessStore = useAccessStore();
+// el-upload 不走 axios 拦截器，需手动携带 JWT
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${accessStore.accessToken}`,
+}));
 const route = useRoute();
 const router = useRouter();
 const uploadDialogVisibleRef = ref(false);
@@ -62,7 +72,15 @@ async function settingArchive(id: string) {
 }
 
 async function downloadArchive(id: string) {
-  window.open(`/api/dontstarve/archive/download/${id}`);
+  try {
+    await downloadArchiveApi(id);
+  } catch {
+    ElNotification({
+      title: '失败',
+      message: '下载存档失败',
+      type: 'error',
+    });
+  }
 }
 
 async function uploadDialogConfirm() {
@@ -106,6 +124,8 @@ function openUploadDialog(id?: string) {
             v-model:file-list="uploadFileListRef"
             drag
             :action="uploadArchive(uploadIdRef)"
+            :method="uploadArchiveMethod(uploadIdRef)"
+            :headers="uploadHeaders"
             :auto-upload="false"
             ref="uploadRef"
             :on-success="(response) => uploadDialogResult(response, true)"

@@ -13,6 +13,7 @@ import ElementPlus, { ElLoading } from 'element-plus';
 import { $t, setupI18n } from '#/locales';
 
 import { initComponentAdapter } from './adapter/component';
+import { initSetupVbenForm } from './adapter/form';
 import App from './app.vue';
 import { router } from './router';
 
@@ -23,6 +24,10 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 async function bootstrap(namespace: string) {
   // 初始化组件适配器
   await initComponentAdapter();
+
+  // 初始化表单组件
+  await initSetupVbenForm();
+
   // // 设置弹窗的默认配置
   // setDefaultModalProps({
   //   fullscreenButton: false,
