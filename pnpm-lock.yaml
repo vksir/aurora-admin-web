@@ -27,9 +27,6 @@ catalogs:
     '@eslint/js':
       specifier: ^9.26.0
       version: 9.26.0
-    '@faker-js/faker':
-      specifier: ^9.7.0
-      version: 9.7.0
     '@iconify/json':
       specifier: ^2.2.334
       version: 2.2.334
@@ -78,9 +75,6 @@ catalogs:
     '@types/html-minifier-terser':
       specifier: ^7.0.2
       version: 7.0.2
-    '@types/jsonwebtoken':
-      specifier: ^9.0.9
-      version: 9.0.9
     '@types/lodash.clonedeep':
       specifier: ^4.5.9
       version: 4.5.9
@@ -267,9 +261,6 @@ catalogs:
     globals:
       specifier: ^16.0.0
       version: 16.0.0
-    h3:
-      specifier: ^1.15.3
-      version: 1.15.3
     happy-dom:
       specifier: ^17.4.6
       version: 17.4.6
@@ -282,12 +273,9 @@ catalogs:
     jsonc-eslint-parser:
       specifier: ^2.4.0
       version: 2.4.0
-    jsonwebtoken:
-      specifier: ^9.0.2
-      version: 9.0.2
     lefthook:
-      specifier: ^1.11.12
-      version: 1.11.12
+      specifier: ^2.2.2
+      version: 2.2.2
     lodash.clonedeep:
       specifier: ^4.5.0
       version: 4.5.0
@@ -570,7 +558,7 @@ importers:
         version: 4.1.0
       lefthook:
         specifier: 'catalog:'
-        version: 1.11.12
+        version: 2.2.2
       playwright:
         specifier: 'catalog:'
         version: 1.52.0
@@ -601,25 +589,6 @@ importers:
       vue-tsc:
         specifier: 'catalog:'
         version: 2.2.10(typescript@5.8.3)
-
-  apps/backend-mock:
-    dependencies:
-      '@faker-js/faker':
-        specifier: 'catalog:'
-        version: 9.7.0
-      jsonwebtoken:
-        specifier: 'catalog:'
-        version: 9.0.2
-      nitropack:
-        specifier: 'catalog:'
-        version: 2.11.11(@netlify/blobs@8.2.0)(encoding@0.1.13)
-    devDependencies:
-      '@types/jsonwebtoken':
-        specifier: 'catalog:'
-        version: 9.0.9
-      h3:
-        specifier: 'catalog:'
-        version: 1.15.3
 
   apps/web-ele:
     dependencies:
@@ -3112,10 +3081,6 @@ packages:
     resolution: {integrity: sha512-ZAoA40rNMPwSm+AeHpCq8STiNAwzWLJuP8Xv4CHIc9wv/PSuExjMrmjfYNj682vW0OOiZ1HKxzvjQr9XZIisQA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@faker-js/faker@9.7.0':
-    resolution: {integrity: sha512-aozo5vqjCmDoXLNUJarFZx2IN/GgGaogY4TMJ6so/WLZOWpSV7fvj2dmrV6sEAnUm1O7aCrhTibjpzeDFgNqbg==}
-    engines: {node: '>=18.0.0', npm: '>=9.0.0'}
-
   '@fastify/busboy@3.1.1':
     resolution: {integrity: sha512-5DGmA8FTdB2XbDeEwc/5ZXBl6UbBAyBOOLlPuBnZ/N1SwdH9Ii+cOX3tBROlDgcTXxjOYnLMVoKk9+FXAw0CJw==}
 
@@ -3877,9 +3842,6 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/jsonwebtoken@9.0.9':
-    resolution: {integrity: sha512-uoe+GxEuHbvy12OUQct2X9JenKM3qAscquYymuQN4fMWG9DBQtykrQEFcAbVACF7qaLw9BePSodUL0kquqBJpQ==}
-
   '@types/lodash-es@4.17.12':
     resolution: {integrity: sha512-0NgftHUcV4v34VhXm8QBSftKVXtbkBG3ViCjs6+eJ5a6y6Mi/jiFGPc1sC7QK+9BFhWrURE3EOggmWaSxL9OzQ==}
 
@@ -3900,9 +3862,6 @@ packages:
 
   '@types/minimatch@3.0.5':
     resolution: {integrity: sha512-Klz949h02Gz2uZCMGwDUSDS1YBlTdDDgbWHi+81l29tQALUtvz4rAYi5uoVhE5Lagoq6DeqAUlbrHvW/mXDgdQ==}
-
-  '@types/ms@2.1.0':
-    resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
   '@types/node@12.20.55':
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
@@ -4739,9 +4698,6 @@ packages:
     resolution: {integrity: sha512-Db1SbgBS/fg/392AblrMJk97KggmvYhr4pB5ZIMTWtaivCPMWLkmb7m21cJvpvgK+J3nsU2CmmixNBZx4vFj/w==}
     engines: {node: '>=8.0.0'}
 
-  buffer-equal-constant-time@1.0.1:
-    resolution: {integrity: sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==}
-
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
 
@@ -5193,6 +5149,7 @@ packages:
 
   crypto-js@4.2.0:
     resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+    deprecated: Active development of CryptoJS has been discontinued. This library is no longer maintained.
 
   crypto-random-string@2.0.0:
     resolution: {integrity: sha512-v1plID3y9r/lPhviJ1wrXpLeyUIGAZ2SHNYTEapm7/8A9nLPoyvVp3RK/EPFqn5kEznyWgYZNsRtYYIWbuG8KA==}
@@ -5604,9 +5561,6 @@ packages:
 
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
-
-  ecdsa-sig-formatter@1.0.11:
-    resolution: {integrity: sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==}
 
   echarts@5.6.0:
     resolution: {integrity: sha512-oTbVTsXfKuEhxftHqL5xprgLoc0k7uScAwtryCgWF6hPYFLRwOUHiFmHGCBKP5NPFNkDVopOieyUqYGH8Fa3kA==}
@@ -7038,19 +6992,9 @@ packages:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
     engines: {node: '>=0.10.0'}
 
-  jsonwebtoken@9.0.2:
-    resolution: {integrity: sha512-PRp66vJ865SSqOlgqS8hujT5U4AOgMfhrwYIuIhfKaoSCZcirrmASQr8CX7cUg+RMih+hgznrjp99o+W4pJLHQ==}
-    engines: {node: '>=12', npm: '>=6'}
-
   junk@4.0.1:
     resolution: {integrity: sha512-Qush0uP+G8ZScpGMZvHUiRfI0YBWuB3gVBYlI0v0vvOJt5FLicco+IkP0a50LqTTQhmts/m6tP5SWE+USyIvcQ==}
     engines: {node: '>=12.20'}
-
-  jwa@1.4.1:
-    resolution: {integrity: sha512-qiLX/xhEEFKUAJ6FiBMbes3w9ATzyk5W7Hvzpa/SLYdxNtng+gcurvrI7TbACjIXlsJyr05/S1oUhZrc63evQA==}
-
-  jws@3.2.2:
-    resolution: {integrity: sha512-YHlZCB6lMTllWDtSPHz/ZXTsi8S00usEV6v1tjq8tOUZzw7DpSDWVXjXDre6ed1w/pd495ODpHZYSdkRTsa0HA==}
 
   jwt-decode@4.0.0:
     resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
@@ -7106,58 +7050,63 @@ packages:
     resolution: {integrity: sha512-b94GiNHQNy6JNTrt5w6zNyffMrNkXZb3KTkCZJb2V1xaEGCk093vkZ2jk3tpaeP33/OiXC+WvK9AxUebnf5nbw==}
     engines: {node: '>= 0.6.3'}
 
-  lefthook-darwin-arm64@1.11.12:
-    resolution: {integrity: sha512-nB3rZVGoign6lhlbdfT1/knk4fV4Kx7kgbho8oSFcpw/o2qRQpLqmclCWUTtf+Pyj4vCzE7hiee/m+uQtvu19w==}
+  lefthook-android-arm64@2.2.2:
+    resolution: {integrity: sha512-wb9rQQFLX7u1dJLxvMrq9VUfMYi5kxM7tJQ6Y4mWEOwaU+SmIm2wjoT/nromKq27Y8fh2Qd7FgCD3G1wfW8CnQ==}
+    cpu: [arm64]
+    os: [android]
+
+  lefthook-darwin-arm64@2.2.2:
+    resolution: {integrity: sha512-6V8D3bLnD/60Xhqn0o2EQD6H3Fe/U9LGkt4WF1O/3eBHbux+5ZJqoH0hfrC+Bi9Dy1Ve1AWxiAY7U2asYl8qVA==}
     cpu: [arm64]
     os: [darwin]
 
-  lefthook-darwin-x64@1.11.12:
-    resolution: {integrity: sha512-ExNz8ctFRRaVz2wpvjmOtV4GeZcRdsAZwnZbmvlu1fMcJ6WtjAuR6fB0ybtcsc03/zBNrfShiq+VtZLkGv8Oeg==}
+  lefthook-darwin-x64@2.2.2:
+    resolution: {integrity: sha512-fH/kArZ9ZZ65wCFtvBMgGcq25qwQpkQ5jp93ba+8wpjgxxzjczYGluwHvM/NQDJWLOFXuKXW0yFs76SramQkyQ==}
     cpu: [x64]
     os: [darwin]
 
-  lefthook-freebsd-arm64@1.11.12:
-    resolution: {integrity: sha512-3Si6YJ8YLEMJ6TGsaBI2ni64XSrJX69N4gX7OKQp85IXeizPUEy7oorYAJCUaw5nMffRbIkzxNTjaMkcn4iwag==}
+  lefthook-freebsd-arm64@2.2.2:
+    resolution: {integrity: sha512-MCRsU01ju989QQffOfS3gCeFfyVDXs5B/FzR65fmrNvqcxb98fldvfzzoAbnK2q6SBJlRT3QT1tNEMCxddCwlA==}
     cpu: [arm64]
     os: [freebsd]
 
-  lefthook-freebsd-x64@1.11.12:
-    resolution: {integrity: sha512-J18MNYZKkVdHJ5K54MT8kxJ/W4TBUxD8aCi4e+Oliw8UXAiwaJSTGPkdY5P8aUlVYDknN2w+6I99Dxre6CJRFw==}
+  lefthook-freebsd-x64@2.2.2:
+    resolution: {integrity: sha512-LkKuJU0S2oLimeoHwPTy1TLWB6GcN0t5lLxiXNlsBKUkr6R47QRcvPMZMoXmu3IetQtd+WliXMLE8qTwi2fqBg==}
     cpu: [x64]
     os: [freebsd]
 
-  lefthook-linux-arm64@1.11.12:
-    resolution: {integrity: sha512-oIWcj7mcHnFB4tcfz4dsZTnDTXIyF7cjCEqhDQTvqJQLbE1XRfjU0RzQdgSKrzdmXIcUFB+lmcgeRwJnKBEJ8Q==}
+  lefthook-linux-arm64@2.2.2:
+    resolution: {integrity: sha512-d+HFtS2DEKaOnD7vRU0tUz8pNgHwsUYmQ22+1dyXpOrXGyzNXR0AqX5KsIRF36JGhVvO5X5Anw5QYgR3mxVSuA==}
     cpu: [arm64]
     os: [linux]
 
-  lefthook-linux-x64@1.11.12:
-    resolution: {integrity: sha512-sr9X5dW5dl9Fa3Kdk3x66DPGgCz/rykm+JHIyQGfnuvZnaeqkEaXgNubBaVGBbOimagXgtA5DwXc6D6fzUYALA==}
+  lefthook-linux-x64@2.2.2:
+    resolution: {integrity: sha512-N/OlQyAhcU6RAXjrwFxLsh70sn96rBoi+XkuLJ8CVBkk9Ci3VDXQayDZTNz5B1xML8RwoMcV8Wblniy1xFOmSA==}
     cpu: [x64]
     os: [linux]
 
-  lefthook-openbsd-arm64@1.11.12:
-    resolution: {integrity: sha512-4TuX8c/lwky1DSNIY6knIFlMIHQZrVBxh6O5vSTjOAjKv5YmIkNgeUlwcBD+SMru9tQBj7MvOpJSkVkaLK5hhQ==}
+  lefthook-openbsd-arm64@2.2.2:
+    resolution: {integrity: sha512-6G/gKXcpIwC+XcODg7ELZYP/hIrVIHQxhy2GoRdVyecmpGMFj+BZo3iqcUmeWusQMuL+UdNexbkrUaeJalIkNw==}
     cpu: [arm64]
     os: [openbsd]
 
-  lefthook-openbsd-x64@1.11.12:
-    resolution: {integrity: sha512-Y/rPvyXtsIH+pxACfLHwxqc2Ahk+aExj8Izce3zXp75Wki5DH+6TXm5tWj5CgIuefL7CMqNFsOZCjEe1+SyM+w==}
+  lefthook-openbsd-x64@2.2.2:
+    resolution: {integrity: sha512-eMJGi3/tqKEqu7XCZlqwQWRtK5JlL/9diaqqgRlEdlRD7GxwzHZN21z6awbITum9emea3lALvXFe6V8odQLGOA==}
     cpu: [x64]
     os: [openbsd]
 
-  lefthook-windows-arm64@1.11.12:
-    resolution: {integrity: sha512-OJaElGktzsMrkmIpXBqwlc+eZx5kwxx+tJFByTXiW/rb8ttBwj0ueVyfo3lw/PqqlbMy73qc9Uj3CHYkaKsDKw==}
+  lefthook-windows-arm64@2.2.2:
+    resolution: {integrity: sha512-4P1EaQb5xG1zhYD1RLJ6TEGdFkmHkB+Slqx6yRDPKuBDNxMiD0+kTAAdUY2E8xPuRR35xHpVPR+b3/HtzPrjQQ==}
     cpu: [arm64]
     os: [win32]
 
-  lefthook-windows-x64@1.11.12:
-    resolution: {integrity: sha512-ZhKsisibIcaG+rv9i7UJUgnuejI6mfaS5T3FreqsWt5vAsEIvLLNmZUA15MHPr99n+L4La1YQ2jTqie1kH57dA==}
+  lefthook-windows-x64@2.2.2:
+    resolution: {integrity: sha512-9Ck4zancQilBfXT3ZeRipm7Lcq4RQfxyMpy8SAVINw0t/BrbjsT25V46ZuziERcwdajnE4myfMzC33GoCBwr7g==}
     cpu: [x64]
     os: [win32]
 
-  lefthook@1.11.12:
-    resolution: {integrity: sha512-refh8mlcNtwJfmHDH+2mN1KTIVjp1EHlrjzOjfH/hJ4vFQByH2+1KfFDlJLX9V16VESwUNyOGkEZ9cJEF6zNgg==}
+  lefthook@2.2.2:
+    resolution: {integrity: sha512-37fYHAhL12r1twaEV0PA5TwoIT491eTGGYjhhXxlYNMq3DSkiGZBQ++Jfk5maXj0vq52NRauLtMikBKtbNJs3Q==}
     hasBin: true
 
   less@4.3.0:
@@ -7233,30 +7182,15 @@ packages:
     resolution: {integrity: sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==}
     deprecated: This package is deprecated. Use the optional chaining (?.) operator instead.
 
-  lodash.includes@4.3.0:
-    resolution: {integrity: sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==}
-
   lodash.isarguments@3.1.0:
     resolution: {integrity: sha512-chi4NHZlZqZD18a0imDHnZPrDeBbTtVN7GXMwuGdRH9qotxAjYs3aVLKc7zNOG9eddR5Ksd8rvFEBc9SsggPpg==}
-
-  lodash.isboolean@3.0.3:
-    resolution: {integrity: sha512-Bz5mupy2SVbPHURB98VAcw+aHh4vRV5IPNhILUCsOzRmsTmSQ17jIuqopAentWoehktxGd9e/hbIXq980/1QJg==}
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
     deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
-  lodash.isinteger@4.0.4:
-    resolution: {integrity: sha512-DBwtEWN2caHQ9/imiNeEA5ys1JoRtRfY3d7V9wkqtbycnAmTvRRmbHKDV4a0EYc678/dia0jrte4tjYwVBaZUA==}
-
-  lodash.isnumber@3.0.3:
-    resolution: {integrity: sha512-QYqzpfwO3/CWf3XP+Z+tkQsfaLL/EnUlXWVkIk5FUPc4sBdTehEqZONuyRt2P67PXAk+NXmTBcc97zw9t1FQrw==}
-
   lodash.isplainobject@4.0.6:
     resolution: {integrity: sha512-oSXzaWypCMHkPC3NvBEaPHf0KsA5mvPrOPgQWDsbg8n7orZ290M0BmC/jgRZ4vcJ6DTAhjrsSYgdsW/F+MFOBA==}
-
-  lodash.isstring@4.0.1:
-    resolution: {integrity: sha512-0wJxfxH1wgO3GrbuP+dTTk7op+6L41QCXbGINEmD+ny/G/eCqGzxyCsh7159S+mgDDcoarnBw6PC1PS5+wUGgw==}
 
   lodash.kebabcase@4.1.1:
     resolution: {integrity: sha512-N8XRTIMMqqDgSy4VLKPnJ/+hpGZN+PHQiJnSenYqPaVV/NCqEogTnAdZLQiGKhxX+JCs8waWq2t1XHWKOmlY8g==}
@@ -7269,9 +7203,6 @@ packages:
 
   lodash.mergewith@4.6.2:
     resolution: {integrity: sha512-GK3g5RPZWTRSeLSpgP8Xhra+pnjBC56q9FZYe1d5RN3TJ35dbkGy3YqBSMbyCrlbi+CM9Z3Jk5yTL7RCsqboyQ==}
-
-  lodash.once@4.1.1:
-    resolution: {integrity: sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==}
 
   lodash.set@4.3.2:
     resolution: {integrity: sha512-4hNPN5jlm/N/HLMCO43v8BXKq9Z7QdAGc/VGrRD61w8gN9g/6jF9A4L1pbUgBLCffi0w9VsXfTOij5x8iTyFvg==}
@@ -9138,6 +9069,7 @@ packages:
   source-map@0.8.0-beta.0:
     resolution: {integrity: sha512-2ymg6oRBpebeZi9UUNsgQ89bhx01TcTkmNTGnNO88imTmbSgy4nfujrgVEFKWpMTEGA11EDkTt7mqObTPdigIA==}
     engines: {node: '>= 8'}
+    deprecated: The work that was done in this beta branch won't be included in future versions
 
   sourcemap-codec@1.4.8:
     resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
@@ -10127,6 +10059,7 @@ packages:
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@3.0.0:
     resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
@@ -12059,8 +11992,6 @@ snapshots:
       '@eslint/core': 0.13.0
       levn: 0.4.1
 
-  '@faker-js/faker@9.7.0': {}
-
   '@fastify/busboy@3.1.1': {}
 
   '@floating-ui/core@1.6.9':
@@ -12920,11 +12851,6 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/jsonwebtoken@9.0.9':
-    dependencies:
-      '@types/ms': 2.1.0
-      '@types/node': 22.15.3
-
   '@types/lodash-es@4.17.12':
     dependencies:
       '@types/lodash': 4.17.16
@@ -12948,8 +12874,6 @@ snapshots:
   '@types/lodash@4.17.16': {}
 
   '@types/minimatch@3.0.5': {}
-
-  '@types/ms@2.1.0': {}
 
   '@types/node@12.20.55': {}
 
@@ -13944,8 +13868,6 @@ snapshots:
 
   buffer-crc32@1.0.0: {}
 
-  buffer-equal-constant-time@1.0.1: {}
-
   buffer-from@1.1.2: {}
 
   buffer@6.0.3:
@@ -14883,10 +14805,6 @@ snapshots:
   duplexer@0.1.2: {}
 
   eastasianwidth@0.2.0: {}
-
-  ecdsa-sig-formatter@1.0.11:
-    dependencies:
-      safe-buffer: 5.2.1
 
   echarts@5.6.0:
     dependencies:
@@ -16501,31 +16419,7 @@ snapshots:
 
   jsonpointer@5.0.1: {}
 
-  jsonwebtoken@9.0.2:
-    dependencies:
-      jws: 3.2.2
-      lodash.includes: 4.3.0
-      lodash.isboolean: 3.0.3
-      lodash.isinteger: 4.0.4
-      lodash.isnumber: 3.0.3
-      lodash.isplainobject: 4.0.6
-      lodash.isstring: 4.0.1
-      lodash.once: 4.1.1
-      ms: 2.1.3
-      semver: 7.7.1
-
   junk@4.0.1: {}
-
-  jwa@1.4.1:
-    dependencies:
-      buffer-equal-constant-time: 1.0.1
-      ecdsa-sig-formatter: 1.0.11
-      safe-buffer: 5.2.1
-
-  jws@3.2.2:
-    dependencies:
-      jwa: 1.4.1
-      safe-buffer: 5.2.1
 
   jwt-decode@4.0.0: {}
 
@@ -16569,48 +16463,52 @@ snapshots:
     dependencies:
       readable-stream: 2.3.8
 
-  lefthook-darwin-arm64@1.11.12:
+  lefthook-android-arm64@2.2.2:
     optional: true
 
-  lefthook-darwin-x64@1.11.12:
+  lefthook-darwin-arm64@2.2.2:
     optional: true
 
-  lefthook-freebsd-arm64@1.11.12:
+  lefthook-darwin-x64@2.2.2:
     optional: true
 
-  lefthook-freebsd-x64@1.11.12:
+  lefthook-freebsd-arm64@2.2.2:
     optional: true
 
-  lefthook-linux-arm64@1.11.12:
+  lefthook-freebsd-x64@2.2.2:
     optional: true
 
-  lefthook-linux-x64@1.11.12:
+  lefthook-linux-arm64@2.2.2:
     optional: true
 
-  lefthook-openbsd-arm64@1.11.12:
+  lefthook-linux-x64@2.2.2:
     optional: true
 
-  lefthook-openbsd-x64@1.11.12:
+  lefthook-openbsd-arm64@2.2.2:
     optional: true
 
-  lefthook-windows-arm64@1.11.12:
+  lefthook-openbsd-x64@2.2.2:
     optional: true
 
-  lefthook-windows-x64@1.11.12:
+  lefthook-windows-arm64@2.2.2:
     optional: true
 
-  lefthook@1.11.12:
+  lefthook-windows-x64@2.2.2:
+    optional: true
+
+  lefthook@2.2.2:
     optionalDependencies:
-      lefthook-darwin-arm64: 1.11.12
-      lefthook-darwin-x64: 1.11.12
-      lefthook-freebsd-arm64: 1.11.12
-      lefthook-freebsd-x64: 1.11.12
-      lefthook-linux-arm64: 1.11.12
-      lefthook-linux-x64: 1.11.12
-      lefthook-openbsd-arm64: 1.11.12
-      lefthook-openbsd-x64: 1.11.12
-      lefthook-windows-arm64: 1.11.12
-      lefthook-windows-x64: 1.11.12
+      lefthook-android-arm64: 2.2.2
+      lefthook-darwin-arm64: 2.2.2
+      lefthook-darwin-x64: 2.2.2
+      lefthook-freebsd-arm64: 2.2.2
+      lefthook-freebsd-x64: 2.2.2
+      lefthook-linux-arm64: 2.2.2
+      lefthook-linux-x64: 2.2.2
+      lefthook-openbsd-arm64: 2.2.2
+      lefthook-openbsd-x64: 2.2.2
+      lefthook-windows-arm64: 2.2.2
+      lefthook-windows-x64: 2.2.2
 
   less@4.3.0:
     dependencies:
@@ -16706,21 +16604,11 @@ snapshots:
 
   lodash.get@4.4.2: {}
 
-  lodash.includes@4.3.0: {}
-
   lodash.isarguments@3.1.0: {}
-
-  lodash.isboolean@3.0.3: {}
 
   lodash.isequal@4.5.0: {}
 
-  lodash.isinteger@4.0.4: {}
-
-  lodash.isnumber@3.0.3: {}
-
   lodash.isplainobject@4.0.6: {}
-
-  lodash.isstring@4.0.1: {}
 
   lodash.kebabcase@4.1.1: {}
 
@@ -16729,8 +16617,6 @@ snapshots:
   lodash.merge@4.6.2: {}
 
   lodash.mergewith@4.6.2: {}
-
-  lodash.once@4.1.1: {}
 
   lodash.set@4.3.2: {}
 

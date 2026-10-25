@@ -114,7 +114,7 @@ catalog:
   is-ci: ^4.1.0
   jsonc-eslint-parser: ^2.4.0
   jsonwebtoken: ^9.0.2
-  lefthook: ^1.11.12
+  lefthook: ^2.2.2
   lodash.clonedeep: ^4.5.0
   lodash.get: ^4.4.2
   lodash.isequal: ^4.5.0
