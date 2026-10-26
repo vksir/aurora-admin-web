@@ -2,6 +2,7 @@ import type {
   Control,
   DontStarveArchive,
   DontStarveConfig,
+  DontStarveMod,
   Status,
 } from '@vben/types';
 
@@ -175,8 +176,35 @@ export interface ModUpdateStatus {
   need_update: boolean;
 }
 
+export interface CreateModRequest {
+  /** 创意工坊 ID（纯数字），如 1392778117 */
+  workshop_id: string;
+  /** 模组配置，可选。支持完整配置块 / 整个 modoverrides.lua 内容 / 仅内部配置项；缺省使用默认配置 */
+  raw_config?: string;
+}
+
+// 通过创意工坊 ID 添加模组（raw_config 缺省时后端使用默认配置）
+export async function createMod(data: CreateModRequest) {
+  return requestClient
+    .post<DontStarveMod>(`${DST}/mods`, data)
+    .then((response) => {
+      ElNotification({
+        title: '成功',
+        message: '添加模组成功',
+        type: 'success',
+      });
+      return response;
+    });
+}
+
+// 上传 modoverrides.lua 导入模组（el-upload 的 action）。el-upload 不走 axios 拦截器，
+// 需手动携带 JWT，参见 uploadArchive 的说明。
+export function uploadModOverrides(): string {
+  return '/api/v1/dst/mods/upload';
+}
+
 export async function listMod(_data?: ListModRequest) {
-  return requestClient.get(`${DST}/mods`);
+  return requestClient.get<DontStarveMod[]>(`${DST}/mods`);
 }
 
 export async function updateMod(id: string, data: any) {
