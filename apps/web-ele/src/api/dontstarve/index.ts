@@ -31,35 +31,9 @@ export interface CreateControlRequest extends Control {
 }
 
 export async function createControl(data: CreateControlRequest) {
-  return requestClient.post(`${SERVICE}/${data.action}`).then((response) => {
-    let msg = '';
-    switch (data.action) {
-      case 'restart':
-        msg = '重启服务器成功';
-        break;
-      case 'start':
-        msg = '启动服务器成功';
-        break;
-      case 'stop':
-        msg = '停止服务器成功';
-        break;
-      case 'update':
-        msg = '更新服务器成功';
-        break;
-      case 'install':
-        msg = '安装服务器成功';
-        break;
-      case 'uninstall':
-        msg = '卸载服务器成功';
-        break;
-    }
-    ElNotification({
-      title: '成功',
-      message: msg,
-      type: 'success',
-    });
-    return response;
-  });
+  // 启动/重启接口返回只代表进程已拉起，是否启动成功由调用方轮询状态确认，
+  // 这里不再直接弹出「成功」通知。
+  return requestClient.post(`${SERVICE}/${data.action}`);
 }
 
 export interface UpdateConfigRequest extends DontStarveConfig {

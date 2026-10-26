@@ -7,8 +7,8 @@ export default defineConfig(async () => {
     application: {},
     vite: {
       build: {
-        // aurora-admin 和 aurora-admin 需放在同级目录
-        outDir: '../../../aurora-admin/assets/web/dist',
+        // 前端作为 git submodule 位于后端仓库内，产物需落到后端的 embed 目录
+        outDir: '../../../assets/web/dist',
         emptyOutDir: true,
       },
       plugins: [

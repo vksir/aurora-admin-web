@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import { copyToClipboard } from '#/util';
 
-const props = defineProps<{
+defineProps<{
   item: any;
+  /** 是否检测到有新版本 */
+  needUpdate?: boolean;
   showStatus?: boolean;
 }>();
 
@@ -37,6 +39,7 @@ const emit = defineEmits<{
           <el-tag v-if="showStatus && item.download" type="success">
             已下载
           </el-tag>
+          <el-tag v-if="needUpdate" type="warning">可更新</el-tag>
         </div>
         <el-button-group>
           <el-button @click="emit('setting', item)">设置</el-button>
@@ -57,6 +60,10 @@ const emit = defineEmits<{
         class="mr-4 rounded"
       />
       <div class="flex flex-col justify-center space-y-2 text-sm text-gray-600">
+        <div v-if="item.workshop_id">
+          <span class="font-semibold">创意工坊 ID:</span>
+          {{ item.workshop_id }}
+        </div>
         <div v-if="item.author">
           <span class="font-semibold">作者:</span>
           {{ item.author }}

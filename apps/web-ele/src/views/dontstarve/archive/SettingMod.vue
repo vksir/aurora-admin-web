@@ -1,109 +1,119 @@
 <script lang="ts" setup>
-import type { DontStarveArchive } from '@vben/types';
-import { ref, onMounted } from 'vue';
+import type { DontStarveArchive, DontStarveMod } from '@vben/types';
+
+import { computed, onMounted, ref, toRaw } from 'vue';
+
 import { ElMessage } from 'element-plus';
-import { listMod } from '#/api/dontstarve';
-import type { DontStarveMod } from '#/api/dontstarve';
+
+import { listMod, updateMod } from '#/api/dontstarve';
 
 const emit = defineEmits(['has-changed']);
 const archiveRef = defineModel<DontStarveArchive>();
 
-const settingsDialogVisible = ref(false);
-const currentMod = ref<DontStarveMod | null>(null);
-const allMods = ref<DontStarveMod[]>([]);
 const loading = ref(false);
+const allMods = ref<DontStarveMod[]>([]);
+const keyword = ref('');
 
-onMounted(() => {
-  loadAllMods();
+// ===== 已启用模组（存档关联的模组） =====
+const enabledIds = computed(
+  () => new Set((archiveRef.value?.mods ?? []).map((mod) => mod.id)),
+);
+const enabledCount = computed(() => enabledIds.value.size);
+
+/**
+ * 展示全部模组：模组库 + 存档关联但模组库中已不存在的模组
+ * （后者保留展示，避免保存时被静默丢弃）
+ */
+const rows = computed<DontStarveMod[]>(() => {
+  const archivedOnly = (archiveRef.value?.mods ?? []).filter(
+    (mod) => !allMods.value.some((item) => item.id === mod.id),
+  );
+  const list = [...allMods.value, ...archivedOnly];
+  const key = keyword.value.trim().toLowerCase();
+  if (!key) return list;
+  return list.filter((mod) =>
+    [mod.name, mod.workshop_id, mod.id]
+      .filter(Boolean)
+      .some((field) => String(field).toLowerCase().includes(key)),
+  );
 });
 
+function isEnabled(mod: DontStarveMod) {
+  return enabledIds.value.has(mod.id);
+}
+
+/** 开关切换：为存档添加 / 删除模组 */
+function toggleMod(mod: DontStarveMod, enabled: boolean) {
+  if (!archiveRef.value) return;
+  if (!Array.isArray(archiveRef.value.mods)) {
+    archiveRef.value.mods = [];
+  }
+  const mods = archiveRef.value.mods;
+  const index = mods.findIndex((item) => item.id === mod.id);
+  if (enabled && index === -1) {
+    // 存档关联的模组项独立于模组库，拷贝一份避免互相影响
+    mods.push(structuredClone(toRaw(mod)));
+  } else if (!enabled && index > -1) {
+    mods.splice(index, 1);
+  } else {
+    return;
+  }
+  emit('has-changed');
+}
+
+// ===== 模组配置弹窗 =====
+const settingsDialogVisible = ref(false);
+const saveLoading = ref(false);
+const currentMod = ref<DontStarveMod | null>(null);
+
 function openModSettings(mod: DontStarveMod) {
-  currentMod.value = JSON.parse(JSON.stringify(mod));
+  // mod 是 Vue 响应式 Proxy，structuredClone 直接克隆 Proxy 会抛 DataCloneError，需先 toRaw
+  currentMod.value = structuredClone(toRaw(mod));
   settingsDialogVisible.value = true;
 }
 
-function saveModSettings() {
+async function saveModSettings() {
   const mod = currentMod.value;
-  if (!mod) {
-    settingsDialogVisible.value = false;
-    return;
-  }
-  const index = archiveRef.value?.mods?.findIndex(
-    (m) => m.workshop_id === mod.workshop_id,
-  );
-  if (
-    index !== undefined &&
-    index > -1 &&
-    archiveRef.value &&
-    archiveRef.value.mods
-  ) {
-    const target = archiveRef.value.mods[index];
-    if (target) {
-      target.raw_config = mod.raw_config;
-      ElMessage.success('保存模组设置成功');
-      emit('has-changed');
-    }
-  } else {
-    // If not in archive yet, just update the local mod config so it gets added properly when checked
-    const modInAll = allMods.value.find(
-      (m) => m.workshop_id === mod.workshop_id,
+  if (!mod) return;
+
+  saveLoading.value = true;
+  try {
+    // 模组配置存放在模组库（dont_starve_mods）中，按模组维度持久化
+    await updateMod(mod.id, { raw_config: mod.raw_config });
+    const inLib = allMods.value.find((item) => item.id === mod.id);
+    if (inLib) inLib.raw_config = mod.raw_config;
+    const inArchive = archiveRef.value?.mods?.find(
+      (item) => item.id === mod.id,
     );
-    if (modInAll) {
-      modInAll.raw_config = mod.raw_config;
-      ElMessage.success('暂存模组设置成功');
-    }
-  }
-  settingsDialogVisible.value = false;
-}
-
-import { nextTick } from 'vue';
-
-const modTable = ref<any>(null);
-
-function handleSelectionChange(selection: DontStarveMod[]) {
-  if (archiveRef.value) {
-    if (!archiveRef.value.mods) {
-      archiveRef.value.mods = [];
-    }
-    // Only update if selection is initiated by user, not initial load
-    // But since it's hard to distinguish, we'll just update it
-    archiveRef.value.mods = JSON.parse(JSON.stringify(selection));
-    emit('has-changed');
+    if (inArchive) inArchive.raw_config = mod.raw_config;
+    settingsDialogVisible.value = false;
+  } catch {
+    // 错误提示由 request 拦截器统一弹出，保留对话框供修改后重试
+    ElMessage.error('保存模组设置失败');
+  } finally {
+    saveLoading.value = false;
   }
 }
 
-const getRowKey = (row: DontStarveMod) => {
-  return row.workshop_id;
-};
+function formatTime(timestamp?: number) {
+  if (!timestamp) return '-';
+  return new Date(timestamp * 1000).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+}
 
-async function loadAllMods() {
+onMounted(initialize);
+
+async function initialize() {
   loading.value = true;
   try {
-    const res = await listMod({});
-    allMods.value = res || [];
-
-    // Set initial selection
-    await nextTick();
-    if (archiveRef.value?.mods && modTable.value) {
-      const rowsToSelect: DontStarveMod[] = [];
-      archiveRef.value.mods.forEach((mod: any) => {
-        // Use Number conversion to match strictly in case of string vs number
-        const row = allMods.value.find(
-          (m) => String(m.workshop_id) === String(mod.workshop_id),
-        );
-        if (row) {
-          // Restore raw_config from archive to allMods so settings reflect current state
-          row.raw_config = mod.raw_config;
-          rowsToSelect.push(row);
-        }
-      });
-
-      rowsToSelect.forEach((row) => {
-        modTable.value.toggleRowSelection(row, true);
-      });
-    }
-  } catch (error) {
-    ElMessage.error('加载模组列表失败');
+    allMods.value = (await listMod({})) ?? [];
   } finally {
     loading.value = false;
   }
@@ -111,82 +121,133 @@ async function loadAllMods() {
 </script>
 
 <template>
+  <div class="mb-3 flex items-center justify-between">
+    <div class="text-sm text-gray-500">
+      已启用
+      <span class="font-semibold text-primary">{{ enabledCount }}</span>
+      / {{ rows.length }} 个模组
+      <span class="ml-2 text-xs text-gray-400">
+        （开关变更后点击右上角「保存」才会写入存档）
+      </span>
+    </div>
+    <el-input
+      v-model="keyword"
+      clearable
+      placeholder="搜索模组名称 / 创意工坊 ID"
+      style="width: 260px"
+    />
+  </div>
+
   <el-table
     v-loading="loading"
-    :data="allMods"
+    :data="rows"
+    row-key="id"
     style="width: 100%"
-    :row-key="getRowKey"
-    @selection-change="handleSelectionChange"
-    ref="modTable"
+    :default-sort="{ prop: 'time_updated', order: 'descending' }"
   >
-    <el-table-column type="selection" width="55" :reserve-selection="true" />
+    <el-table-column label="启用" width="90" fixed="left">
+      <template #default="scope">
+        <el-switch
+          :model-value="isEnabled(scope.row)"
+          inline-prompt
+          active-text="开"
+          inactive-text="关"
+          :disabled="!archiveRef"
+          @change="(value: any) => toggleMod(scope.row, !!value)"
+        />
+      </template>
+    </el-table-column>
     <el-table-column label="图片" width="80">
       <template #default="scope">
         <el-image
+          v-if="scope.row.image"
           :src="scope.row.image"
           style="width: 50px; height: 50px; border-radius: 4px"
           fit="cover"
         />
+        <span v-else class="text-xs text-gray-400">无</span>
       </template>
     </el-table-column>
-    <el-table-column prop="name" label="模组名称" min-width="150" />
-    <el-table-column prop="time_created" label="创建时间" min-width="150">
+    <el-table-column prop="name" label="模组名称" min-width="180">
       <template #default="scope">
-        {{
-          new Date(scope.row.time_created * 1000)
-            .toLocaleString('zh-CN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false,
-            })
-            .replace(/\//g, '/')
-        }}
+        <span>{{ scope.row.name || scope.row.id }}</span>
       </template>
     </el-table-column>
-    <el-table-column prop="time_updated" label="更新时间" min-width="150">
+    <el-table-column prop="workshop_id" label="创意工坊 ID" width="140">
       <template #default="scope">
-        {{
-          new Date(scope.row.time_updated * 1000)
-            .toLocaleString('zh-CN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false,
-            })
-            .replace(/\//g, '/')
-        }}
+        <el-link
+          v-if="scope.row.workshop_id"
+          :href="`https://steamcommunity.com/sharedfiles/filedetails/?id=${scope.row.workshop_id}`"
+          target="_blank"
+          type="primary"
+          :underline="false"
+        >
+          {{ scope.row.workshop_id }}
+        </el-link>
       </template>
     </el-table-column>
-    <el-table-column label="操作" width="120" fixed="right">
+    <el-table-column
+      prop="time_created"
+      label="创建时间"
+      min-width="170"
+      sortable
+    >
       <template #default="scope">
-        <el-button link type="primary" @click="openModSettings(scope.row)">
+        {{ formatTime(scope.row.time_created) }}
+      </template>
+    </el-table-column>
+    <el-table-column
+      prop="time_updated"
+      label="更新时间"
+      min-width="170"
+      sortable
+    >
+      <template #default="scope">
+        {{ formatTime(scope.row.time_updated) }}
+      </template>
+    </el-table-column>
+    <el-table-column label="操作" width="100" fixed="right">
+      <template #default="scope">
+        <el-button
+          link
+          type="primary"
+          :disabled="!isEnabled(scope.row)"
+          @click="openModSettings(scope.row)"
+        >
           设置
         </el-button>
       </template>
     </el-table-column>
   </el-table>
 
-  <el-dialog v-model="settingsDialogVisible" title="模组设置" width="60%">
+  <el-dialog
+    v-model="settingsDialogVisible"
+    :title="`模组设置 - ${currentMod?.name || currentMod?.id || ''}`"
+    width="60%"
+  >
     <div v-if="currentMod">
+      <div class="mb-2 text-xs text-gray-400">
+        模组配置（modoverrides.lua
+        中该模组的配置项），按模组维度保存，对该模组的所有存档生效
+      </div>
       <el-input
         v-model="currentMod.raw_config"
         type="textarea"
         :rows="15"
-        placeholder="Input raw config for the mod..."
+        placeholder="如 ['workshop-1392778117']={ configuration_options={}, enabled=true }"
         class="font-mono text-sm"
       />
     </div>
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="settingsDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveModSettings">保存</el-button>
+        <el-button
+          type="primary"
+          :loading="saveLoading"
+          @click="saveModSettings"
+        >
+          保存
+        </el-button>
       </span>
     </template>
   </el-dialog>

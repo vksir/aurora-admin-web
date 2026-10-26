@@ -1,4 +1,4 @@
-import type {RouteRecordRaw} from 'vue-router';
+import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -17,6 +17,15 @@ const routes: RouteRecordRaw[] = [
         meta: {
           icon: 'lucide:area-chart',
           title: '控制台',
+        },
+      },
+      {
+        name: 'Dontstarve Service Log',
+        path: '/dontstarve/log',
+        component: () => import('#/views/dontstarve/log/index.vue'),
+        meta: {
+          icon: 'lucide:scroll-text',
+          title: '服务日志',
         },
       },
       {
@@ -41,14 +50,15 @@ const routes: RouteRecordRaw[] = [
           {
             name: 'Dontstarve Archive Setting',
             path: '/dontstarve/archive/setting',
-            component: () => import('#/views/dontstarve/archive/ArchiveSetting.vue'),
+            component: () =>
+              import('#/views/dontstarve/archive/ArchiveSetting.vue'),
             meta: {
               icon: 'lucide:area-chart',
               title: '存档设置',
               hideInMenu: true,
             },
           },
-        ]
+        ],
       },
       {
         name: 'Dontstarve Mod',
@@ -56,7 +66,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/dontstarve/mod/index.vue'),
         meta: {
           icon: 'lucide:area-chart',
-          title: '模组设置',
+          title: '模组管理',
         },
       },
     ],

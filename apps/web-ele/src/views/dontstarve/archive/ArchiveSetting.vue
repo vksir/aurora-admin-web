@@ -32,7 +32,24 @@ async function initialize() {
     });
     return;
   }
-  archiveRef.value = await getArchive(archiveId.toString());
+  archiveRef.value = normalizeArchive(await getArchive(archiveId.toString()));
+}
+
+/**
+ * 旧存档兼容：更早的 ent 版本接口把模组关联嵌在 edges.mods 里返回，
+ * 且旧数据可能没有写入关联。这里把 edges.mods 归一到顶层 mods，
+ * 避免模组设置页把所有模组都显示为未启用。
+ * 若两边都没有数据，后端会在读取存档时按存档目录里的 modoverrides.lua 回填。
+ */
+function normalizeArchive(archive: DontStarveArchive): DontStarveArchive {
+  if (archive.mods?.length) {
+    return archive;
+  }
+  const legacyMods = (archive as any)?.edges?.mods;
+  if (Array.isArray(legacyMods) && legacyMods.length > 0) {
+    archive.mods = legacyMods.filter((mod: any) => mod?.enabled !== false);
+  }
+  return archive;
 }
 
 // 保存存档按钮

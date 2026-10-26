@@ -30,6 +30,26 @@ const loading = ref(false);
 const archives = ref<DontStarveArchive[]>([]);
 const config = ref<DontStarveConfig>();
 
+/** 启动/重启接口返回只代表进程已拉起，需要轮询到 Active 才算成功 */
+type PendingStartAction = {
+  action: 'restart' | 'start';
+  deadline: number;
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  install: '安装',
+  restart: '重启',
+  start: '启动',
+  stop: '停止',
+  uninstall: '卸载',
+  update: '更新',
+};
+
+/** 略大于后端 waitActive 的 10 分钟超时 */
+const START_WAIT_TIMEOUT = 11 * 60 * 1000;
+
+const pendingStartAction = ref<null | PendingStartAction>(null);
+
 const admins = ref<DontStarveAdmin[]>([]);
 const adminDialogVisible = ref(false);
 const adminForm = reactive({
@@ -63,8 +83,32 @@ const currentArchive = computed(() => {
 async function fetchStatus() {
   try {
     status.value = await getStatus();
+    handlePendingStartAction(status.value.status);
   } catch {
     ElMessage.error('获取状态失败');
+  }
+}
+
+/** 状态轮询到 Active 才提示启动成功，失败态则提示失败 */
+function handlePendingStartAction(current: string) {
+  const pending = pendingStartAction.value;
+  if (!pending) {
+    return;
+  }
+  const label = ACTION_LABELS[pending.action];
+  if (current === 'Active') {
+    pendingStartAction.value = null;
+    ElMessage.success(`${label}服务器成功`);
+    return;
+  }
+  if (current === 'Abnormal' || current === 'Inactive') {
+    pendingStartAction.value = null;
+    ElMessage.error(`${label}服务器失败，请查看服务日志`);
+    return;
+  }
+  if (Date.now() > pending.deadline) {
+    pendingStartAction.value = null;
+    ElMessage.warning(`等待服务器${label}超时，请查看服务日志`);
   }
 }
 
@@ -110,16 +154,35 @@ onUnmounted(() => {
 });
 
 async function handleAction(action: string) {
+  const label = ACTION_LABELS[action] ?? action;
+  // 新的操作会接管状态提示，避免旧的「等待启动结果」误报
+  pendingStartAction.value = null;
   try {
     loading.value = true;
     await createControl({ action });
-    ElMessage.success(`操作 ${action} 成功`);
-    await fetchStatus();
   } catch {
-    ElMessage.error(`操作 ${action} 失败`);
+    ElMessage.error(`${label}服务器失败`);
+    return;
   } finally {
     loading.value = false;
   }
+
+  if (action === 'start' || action === 'restart') {
+    // 接口此时只完成了进程拉起，世界还在加载；先提示「正在启动」，
+    // 等状态轮询到 Active 后再提示成功。
+    pendingStartAction.value = {
+      action: action as 'restart' | 'start',
+      deadline: Date.now() + START_WAIT_TIMEOUT,
+    };
+    await fetchStatus();
+    if (pendingStartAction.value) {
+      ElMessage.info(`服务器正在${label}，请稍候…`);
+    }
+    return;
+  }
+
+  await fetchStatus();
+  ElMessage.success(`${label}服务器成功`);
 }
 
 async function saveSettings() {
