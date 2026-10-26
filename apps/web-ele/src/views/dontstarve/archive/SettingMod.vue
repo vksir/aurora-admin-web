@@ -23,6 +23,7 @@ const enabledCount = computed(() => enabledIds.value.size);
 /**
  * 展示全部模组：模组库 + 存档关联但模组库中已不存在的模组
  * （后者保留展示，避免保存时被静默丢弃）
+ * 已启用的模组排在前面，组内保持原有顺序。
  */
 const rows = computed<DontStarveMod[]>(() => {
   const archivedOnly = (archiveRef.value?.mods ?? []).filter(
@@ -30,12 +31,20 @@ const rows = computed<DontStarveMod[]>(() => {
   );
   const list = [...allMods.value, ...archivedOnly];
   const key = keyword.value.trim().toLowerCase();
-  if (!key) return list;
-  return list.filter((mod) =>
-    [mod.name, mod.workshop_id, mod.id]
-      .filter(Boolean)
-      .some((field) => String(field).toLowerCase().includes(key)),
-  );
+  const matched = key
+    ? list.filter((mod) =>
+        [mod.name, mod.workshop_id, mod.id]
+          .filter(Boolean)
+          .some((field) => String(field).toLowerCase().includes(key)),
+      )
+    : list;
+
+  const enabled: DontStarveMod[] = [];
+  const disabled: DontStarveMod[] = [];
+  for (const mod of matched) {
+    (enabledIds.value.has(mod.id) ? enabled : disabled).push(mod);
+  }
+  return [...enabled, ...disabled];
 });
 
 function isEnabled(mod: DontStarveMod) {
@@ -138,13 +147,7 @@ async function initialize() {
     />
   </div>
 
-  <el-table
-    v-loading="loading"
-    :data="rows"
-    row-key="id"
-    style="width: 100%"
-    :default-sort="{ prop: 'time_updated', order: 'descending' }"
-  >
+  <el-table v-loading="loading" :data="rows" row-key="id" style="width: 100%">
     <el-table-column label="启用" width="90" fixed="left">
       <template #default="scope">
         <el-switch
