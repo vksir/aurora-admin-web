@@ -5,11 +5,23 @@ import type {
   DontStarveWorldRole,
   DontStarveWorldSize,
 } from '@vben/types';
+import { computed, ref, watch } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { Delete, Plus } from '@element-plus/icons-vue';
 
 const worldRoleToString: Record<DontStarveWorldRole, string> = {
   primary: '主世界',
   surface: '地上世界',
   caves: '地下世界',
+};
+
+const worldRoleTag: Record<
+  DontStarveWorldRole,
+  'danger' | 'primary' | 'warning'
+> = {
+  primary: 'danger',
+  surface: 'primary',
+  caves: 'warning',
 };
 
 const worldSizeOptions: { label: string; value: DontStarveWorldSize }[] = [
@@ -22,8 +34,25 @@ const worldSizeOptions: { label: string; value: DontStarveWorldSize }[] = [
 const emit = defineEmits(['has-changed']);
 const archiveRef = defineModel<DontStarveArchive>();
 
+const selectedName = ref<string>('');
+
+const worlds = computed<DontStarveWorld[]>(() => archiveRef.value?.world ?? []);
+
+const selected = computed<DontStarveWorld | undefined>(() =>
+  worlds.value.find((w) => w.name === selectedName.value),
+);
+
+watch(
+  worlds,
+  (list) => {
+    if (!list.some((w) => w.name === selectedName.value)) {
+      selectedName.value = list[0]?.name ?? '';
+    }
+  },
+  { immediate: true, deep: false },
+);
+
 function roleOf(world: DontStarveWorld): DontStarveWorldRole | undefined {
-  // 旧数据只有 type（Master/Caves），读时兜底一次
   if (world.role) {
     return world.role;
   }
@@ -36,24 +65,83 @@ function roleOf(world: DontStarveWorld): DontStarveWorldRole | undefined {
   return undefined;
 }
 
-function title(world: DontStarveWorld) {
-  const role = roleOf(world);
-  const roleText = role ? worldRoleToString[role] : '未知世界';
-  return `${roleText} · ${world.name || world.type || ''}`;
+function nextName(prefix: string) {
+  const used = new Set(worlds.value.map((w) => w.name));
+  for (let i = 1; i < 100; i++) {
+    const name = `${prefix}${i}`;
+    if (!used.has(name)) {
+      return name;
+    }
+  }
+  return `${prefix}${Date.now()}`;
 }
 
-/**
- * 世界大小写进 leveldataoverride.lua 的 overrides.world_size。
- * 只在世界还没生成时生效，改已有世界需要在存档界面重新生成。
- */
+function addWorld(role: DontStarveWorldRole) {
+  if (!archiveRef.value) {
+    return;
+  }
+  // 新世界只需要角色与大小：分片 id / 端口 / 世界生成模板都由后端补齐，
+  // 地表模板从现有地表复制，洞穴模板从现有洞穴复制（没有就留空用内置模板）。
+  const source = worlds.value.find((w) => roleOf(w) === role);
+  const world: DontStarveWorld = {
+    name: nextName(role === 'caves' ? 'Caves' : 'Surface'),
+    role,
+    shard_id: '',
+    port: 0,
+    enabled: true,
+    world_size: source?.world_size ?? 'small',
+    world_override: source?.world_override ?? '',
+    server_config: '',
+  };
+  archiveRef.value.world.push(world);
+  // 新世界默认接入同类型的洞穴世界（一张地表对应一个洞穴）
+  if (role === 'surface') {
+    const caves = worlds.value.find((w) => roleOf(w) === 'caves');
+    if (caves) {
+      archiveRef.value.links = [
+        ...(archiveRef.value.links ?? []),
+        { kind: 'caves', from: world.name, to: caves.name, order: 0 },
+      ];
+    }
+  }
+  selectedName.value = world.name;
+  emit('has-changed');
+}
+
+async function removeWorld(world: DontStarveWorld) {
+  if (!archiveRef.value) {
+    return;
+  }
+  const role = roleOf(world);
+  if (role === 'primary') {
+    ElMessage.warning('主世界不能删除');
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(
+      `确定删除世界「${world.name}」？该世界的存档数据会从配置中移除（磁盘目录不会立即删除），玩家如果正停在这个世界，下次进服可能需要重选人物。`,
+      '删除世界',
+      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' },
+    );
+  } catch {
+    return;
+  }
+  archiveRef.value.world = worlds.value.filter((w) => w.name !== world.name);
+  archiveRef.value.links = (archiveRef.value.links ?? []).filter(
+    (l) => l.from !== world.name && l.to !== world.name,
+  );
+  emit('has-changed');
+}
+
 function applyWorldSize(world: DontStarveWorld, size: DontStarveWorldSize) {
+  world.world_size = size;
   const quoted = `"${size}"`;
   if (/world_size\s*=\s*("[^"]*"|'[^']*')/.test(world.world_override)) {
     world.world_override = world.world_override.replace(
       /world_size\s*=\s*("[^"]*"|'[^']*')/,
       `world_size=${quoted}`,
     );
-  } else {
+  } else if (world.world_override) {
     const hit = world.world_override.search(/overrides\s*=\s*\{/);
     if (hit >= 0) {
       const brace = world.world_override.indexOf('{', hit);
@@ -65,56 +153,176 @@ function applyWorldSize(world: DontStarveWorld, size: DontStarveWorldSize) {
 </script>
 
 <template>
-  <el-row>
-    <el-col :span="12" v-for="world in archiveRef?.world" :key="world.name">
-      <el-card style="margin: 0 4px" shadow="never">
+  <div
+    style="
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 8px 4px;
+    "
+  >
+    <el-button type="primary" :icon="Plus" @click="addWorld('surface')">
+      新增地上世界
+    </el-button>
+    <el-button :icon="Plus" @click="addWorld('caves')">
+      新增地下世界
+    </el-button>
+    <span style="font-size: 12px; opacity: 0.65">
+      一个存档恰好一个主世界；地上/地下世界可以有多张。新增后点右上角「保存」，
+      分片 id 与端口由面板自动分配。
+    </span>
+  </div>
+
+  <el-row :gutter="8">
+    <el-col :span="8">
+      <el-card shadow="never">
+        <template #header>
+          <span>世界列表</span>
+        </template>
+
+        <div
+          v-for="world in worlds"
+          :key="world.name"
+          style="
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+          "
+          :style="{
+            background:
+              world.name === selectedName
+                ? 'var(--el-fill-color)'
+                : 'transparent',
+          }"
+          @click="selectedName = world.name"
+        >
+          <el-tag
+            :type="worldRoleTag[roleOf(world) ?? 'surface']"
+            size="small"
+            effect="dark"
+          >
+            {{ worldRoleToString[roleOf(world) ?? 'surface'] }}
+          </el-tag>
+          <span style="flex: 1">{{ world.name }}</span>
+          <el-switch
+            v-model="world.enabled"
+            size="small"
+            :disabled="roleOf(world) === 'primary'"
+            @change="emit('has-changed')"
+            @click.stop
+          />
+        </div>
+      </el-card>
+    </el-col>
+
+    <el-col :span="16">
+      <el-card v-if="selected" shadow="never">
         <template #header>
           <div style="display: flex; gap: 8px; align-items: center">
-            <span>{{ title(world) }}</span>
-            <el-tag
-              v-if="roleOf(world) === 'primary'"
-              type="warning"
-              size="small"
-            >
-              唯一
-            </el-tag>
-            <el-tag v-if="world.enabled === false" type="info" size="small">
-              未启用
-            </el-tag>
-            <span style="margin-left: auto; font-size: 12px; opacity: 0.6">
-              分片 id {{ world.shard_id || '-' }} · 端口 {{ world.port || '-' }}
+            <span>
+              {{ worldRoleToString[roleOf(selected) ?? 'surface'] }} ·
+              {{ selected.name }}
             </span>
+            <el-tag v-if="selected.enabled === false" type="info" size="small">
+              未启用（不参与启动）
+            </el-tag>
+            <el-tooltip
+              :content="
+                roleOf(selected) === 'primary'
+                  ? '主世界是集群入口，不能删除'
+                  : '只从配置里移除；磁盘存档不会立即删除，玩家若停留在该世界需注意重选人物'
+              "
+              placement="top"
+            >
+              <span style="margin-left: auto">
+                <el-button
+                  type="danger"
+                  plain
+                  :icon="Delete"
+                  :disabled="roleOf(selected) === 'primary'"
+                  @click="removeWorld(selected)"
+                >
+                  删除
+                </el-button>
+              </span>
+            </el-tooltip>
           </div>
         </template>
 
-        <el-form label-width="80px" style="margin-bottom: 8px">
-          <el-form-item label="世界大小" style="margin-bottom: 0">
-            <el-select
-              :model-value="world.world_size || 'default'"
-              style="width: 140px"
-              @update:model-value="
-                (v: DontStarveWorldSize) => applyWorldSize(world, v)
-              "
-            >
-              <el-option
-                v-for="opt in worldSizeOptions"
-                :key="opt.value"
-                :label="opt.label"
-                :value="opt.value"
-              />
-            </el-select>
-            <span style="margin-left: 8px; font-size: 12px; opacity: 0.6">
-              仅对未生成的世界生效
-            </span>
+        <el-form label-width="110px">
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="世界名">
+                <el-input
+                  v-model="selected.name"
+                  @change="emit('has-changed')"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="世界大小">
+                <el-select
+                  :model-value="selected.world_size || 'default'"
+                  style="width: 100%"
+                  @update:model-value="
+                    (v: DontStarveWorldSize) => applyWorldSize(selected!, v)
+                  "
+                >
+                  <el-option
+                    v-for="opt in worldSizeOptions"
+                    :key="opt.value"
+                    :label="opt.label"
+                    :value="opt.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="分片 id">
+                <el-input
+                  :model-value="selected.shard_id || '保存后自动分配'"
+                  disabled
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="端口">
+                <el-input
+                  :model-value="selected.port || '保存后自动分配'"
+                  disabled
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-alert
+            type="info"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 12px"
+            title="分片 id 与端口由面板分配且不可手改：分片 id 会写进玩家存档与传送门绑定，改了等于换一个世界。世界大小只对还没生成的世界生效，已生成的世界需要重新生成。"
+          />
+
+          <el-form-item label="世界生成">
+            <el-input
+              v-model="selected.world_override"
+              type="textarea"
+              :rows="22"
+              placeholder="留空表示保存时用内置模板（地表用森林预设、洞穴用洞穴预设）"
+              @change="emit('has-changed')"
+            />
           </el-form-item>
         </el-form>
-
-        <el-input
-          v-model="world.world_override"
-          type="textarea"
-          :rows="30"
-          @change="emit('has-changed')"
-        />
+      </el-card>
+      <el-card v-else shadow="never">
+        <el-empty description="请选择或新增一个世界" />
       </el-card>
     </el-col>
   </el-row>
