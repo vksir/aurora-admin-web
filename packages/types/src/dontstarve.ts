@@ -55,6 +55,46 @@ interface DontStarveLink {
   order: number;
 }
 
+/** 运行期：一个迁移门的现状 */
+interface DontStarvePortal {
+  guid: string;
+  prefab: string;
+  id: string;
+  linked_world: string;
+  received: string;
+  auto: boolean;
+  x: number;
+  z: number;
+}
+
+/** 运行期：单个世界的拓扑状态 */
+interface DontStarveWorldTopology {
+  world: string;
+  role: DontStarveWorldRole;
+  portals: DontStarvePortal[];
+  pending: number;
+  warnings?: string[];
+}
+
+/** 运行期：拓扑检查/应用结果 */
+interface DontStarveTopologyResult {
+  applied: boolean;
+  ops: number;
+  worlds: DontStarveWorldTopology[];
+  warnings?: string[];
+}
+
+/** 运行期：单个世界的进程状态 */
+interface DontStarveWorldStatus {
+  name: string;
+  role: DontStarveWorldRole;
+  enabled: boolean;
+  port: number;
+  shard_id: string;
+  status: string;
+  pid?: number;
+}
+
 /**
  * 对齐后端 internal/store/archive.go 的 store.Archive（JSON 响应）
  * mods 为顶层字段（旧 ent 版本为 edges.mods 嵌套，已废弃）
@@ -79,5 +119,9 @@ export type {
   DontStarveWorldSize,
   DontStarveLink,
   DontStarveLinkKind,
+  DontStarvePortal,
+  DontStarveWorldTopology,
+  DontStarveTopologyResult,
+  DontStarveWorldStatus,
   DontStarveArchive,
 };

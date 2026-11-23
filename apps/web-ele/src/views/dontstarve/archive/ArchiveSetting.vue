@@ -8,12 +8,14 @@ import SettingRoom from '#/views/dontstarve/archive/SettingRoom.vue';
 import SettingWorld from '#/views/dontstarve/archive/SettingWorld.vue';
 import SettingMod from '#/views/dontstarve/archive/SettingMod.vue';
 import SettingServer from '#/views/dontstarve/archive/SettingServer.vue';
+import SettingTopology from '#/views/dontstarve/archive/SettingTopology.vue';
 
 enum SettingTapType {
   Room = 'Room',
   World = 'World',
   Mod = 'Mod',
   Server = 'Server',
+  Topology = 'Topology',
 }
 
 const archiveRef = ref<DontStarveArchive>();
@@ -79,6 +81,10 @@ async function resetArchive() {
           label="世界设置"
           :name="SettingTapType.World"
         ></el-tab-pane>
+        <el-tab-pane
+          label="世界连接"
+          :name="SettingTapType.Topology"
+        ></el-tab-pane>
         <el-tab-pane label="模组设置" :name="SettingTapType.Mod"></el-tab-pane>
         <el-tab-pane
           label="服务设置"
@@ -112,6 +118,13 @@ async function resetArchive() {
       <div v-else-if="settingTabRef == SettingTapType.World">
         <SettingWorld
           v-model="archiveRef"
+          @has-changed="archiveHasChanged = true"
+        />
+      </div>
+      <div v-else-if="settingTabRef == SettingTapType.Topology">
+        <SettingTopology
+          v-model="archiveRef"
+          :dirty="archiveHasChanged"
           @has-changed="archiveHasChanged = true"
         />
       </div>

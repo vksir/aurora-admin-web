@@ -3,6 +3,8 @@ import type {
   DontStarveArchive,
   DontStarveConfig,
   DontStarveMod,
+  DontStarveTopologyResult,
+  DontStarveWorldStatus,
   Status,
 } from '@vben/types';
 
@@ -27,8 +29,7 @@ export async function getStatus() {
   return requestClient.get<Status>(`${SERVICE}/status`);
 }
 
-export interface CreateControlRequest extends Control {
-}
+export interface CreateControlRequest extends Control {}
 
 export async function createControl(data: CreateControlRequest) {
   // 启动/重启接口返回只代表进程已拉起，是否启动成功由调用方轮询状态确认，
@@ -36,8 +37,7 @@ export async function createControl(data: CreateControlRequest) {
   return requestClient.post(`${SERVICE}/${data.action}`);
 }
 
-export interface UpdateConfigRequest extends DontStarveConfig {
-}
+export interface UpdateConfigRequest extends DontStarveConfig {}
 
 export async function getConfig() {
   return requestClient.get<DontStarveConfig>(`${DST}/config`);
@@ -56,14 +56,28 @@ export async function updateConfig(data: UpdateConfigRequest) {
     });
 }
 
-export interface ListArchiveRequest {
+/** 世界运行态：每个世界一个进程，状态与分片名一一对应 */
+export async function listWorldStatus() {
+  return requestClient.get<DontStarveWorldStatus[]>(`${SERVICE}/worlds`);
 }
 
-export interface CreateArchiveRequest {
+/** 检查世界拓扑是否已生效（只采集不执行，服务未运行时返回 409） */
+export async function checkTopology() {
+  return requestClient.get<DontStarveTopologyResult>(`${SERVICE}/topology`);
 }
 
-export interface UpdateArchiveRequest extends DontStarveArchive {
+/** 应用世界拓扑：把洞口/绳梯/传送门按配置收敛（幂等） */
+export async function applyTopology() {
+  return requestClient.post<DontStarveTopologyResult>(
+    `${SERVICE}/topology/apply`,
+  );
 }
+
+export interface ListArchiveRequest {}
+
+export interface CreateArchiveRequest {}
+
+export interface UpdateArchiveRequest extends DontStarveArchive {}
 
 export async function getArchive(id: string) {
   return requestClient.get<DontStarveArchive>(`${DST}/archives/${id}`);
@@ -91,16 +105,14 @@ export async function updateArchive(id: string, data: UpdateArchiveRequest) {
 }
 
 export async function deleteArchive(id: string) {
-  return requestClient
-    .delete(`${DST}/archives/${id}`)
-    .then((response) => {
-      ElNotification({
-        title: '成功',
-        message: '删除存档成功',
-        type: 'success',
-      });
-      return response;
+  return requestClient.delete(`${DST}/archives/${id}`).then((response) => {
+    ElNotification({
+      title: '成功',
+      message: '删除存档成功',
+      type: 'success',
     });
+    return response;
+  });
 }
 
 export async function enableArchive(id: string) {
@@ -139,8 +151,7 @@ export async function downloadArchive(id: string) {
   URL.revokeObjectURL(url);
 }
 
-export interface ListModRequest {
-}
+export interface ListModRequest {}
 
 export interface ModUpdateStatus {
   workshop_id: string;
@@ -182,16 +193,14 @@ export async function listMod(_data?: ListModRequest) {
 }
 
 export async function updateMod(id: string, data: any) {
-  return requestClient
-    .put(`${DST}/mods/${id}`, data)
-    .then((response) => {
-      ElNotification({
-        title: '成功',
-        message: '更新模组成功',
-        type: 'success',
-      });
-      return response;
+  return requestClient.put(`${DST}/mods/${id}`, data).then((response) => {
+    ElNotification({
+      title: '成功',
+      message: '更新模组成功',
+      type: 'success',
     });
+    return response;
+  });
 }
 
 export async function deleteMod(ids: string[]) {
@@ -250,16 +259,14 @@ export async function createAdmin(data: Partial<DontStarveAdmin>) {
 }
 
 export async function deleteAdmin(id: string) {
-  return requestClient
-    .delete(`${DST}/admins/${id}`)
-    .then((response) => {
-      ElNotification({
-        title: '成功',
-        message: '删除管理员成功',
-        type: 'success',
-      });
-      return response;
+  return requestClient.delete(`${DST}/admins/${id}`).then((response) => {
+    ElNotification({
+      title: '成功',
+      message: '删除管理员成功',
+      type: 'success',
     });
+    return response;
+  });
 }
 
 export async function announce(message: string) {
@@ -281,16 +288,14 @@ export async function listPlayer() {
 }
 
 export async function regenerate() {
-  return requestClient
-    .post(`${DST}/console/regenerate`)
-    .then((response) => {
-      ElNotification({
-        title: '成功',
-        message: '重置世界成功',
-        type: 'success',
-      });
-      return response;
+  return requestClient.post(`${DST}/console/regenerate`).then((response) => {
+    ElNotification({
+      title: '成功',
+      message: '重置世界成功',
+      type: 'success',
     });
+    return response;
+  });
 }
 
 export async function rollback(days: number) {
