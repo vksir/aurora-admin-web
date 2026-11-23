@@ -72,7 +72,7 @@
     "@vben/vsh": "workspace:*",
     "@vitejs/plugin-vue": "catalog:",
     "@vitejs/plugin-vue-jsx": "catalog:",
-    "concurrently": "^10.0.6",
+    "concurrently": "^10.0.7",
     "cross-env": "catalog:",
     "cspell": "catalog:",
     "happy-dom": "catalog:",
