@@ -21,10 +21,38 @@ interface DontStarveMod extends Model {
   raw_config?: string;
 }
 
-interface DontStarveWorld extends Model {
-  type: string;
+/** 世界角色：主世界 / 地表 / 洞穴 */
+type DontStarveWorldRole = 'primary' | 'surface' | 'caves';
+
+/** 世界生成大小 */
+type DontStarveWorldSize = 'small' | 'medium' | 'default' | 'huge';
+
+/** 世界连接类型：洞穴（洞口↔绳梯）/ 传送门（地表之间） */
+type DontStarveLinkKind = 'caves' | 'portal';
+
+/**
+ * 一个世界（= 一个分片进程承载的地图）。
+ * type 是旧版本字段，仅为兼容历史数据保留；新代码用 role/name。
+ */
+interface DontStarveWorld {
+  type?: string;
+  name: string;
+  role: DontStarveWorldRole;
+  shard_id: string;
+  port: number;
+  enabled: boolean;
+  world_size: DontStarveWorldSize;
+  remark?: string;
   server_config: string;
   world_override: string;
+}
+
+/** 世界之间的通行关系 */
+interface DontStarveLink {
+  kind: DontStarveLinkKind;
+  from: string;
+  to: string;
+  order: number;
 }
 
 /**
@@ -39,6 +67,7 @@ interface DontStarveArchive extends Model {
   max_players: number;
   pvp: boolean;
   world: DontStarveWorld[];
+  links?: DontStarveLink[];
   mods?: DontStarveMod[];
 }
 
@@ -46,5 +75,9 @@ export type {
   DontStarveConfig,
   DontStarveMod,
   DontStarveWorld,
+  DontStarveWorldRole,
+  DontStarveWorldSize,
+  DontStarveLink,
+  DontStarveLinkKind,
   DontStarveArchive,
 };
