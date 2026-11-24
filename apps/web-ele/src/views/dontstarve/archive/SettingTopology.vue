@@ -5,6 +5,7 @@ import type {
   DontStarveLinkKind,
   DontStarveTopologyResult,
   DontStarveWorldRole,
+  DontStarveWorldTopology,
 } from '@vben/types';
 import { computed, ref } from 'vue';
 import { ElMessage, ElMessageBox, ElNotification } from 'element-plus';
@@ -47,6 +48,63 @@ const cavesLinkOwners = computed(
 
 function isOrphan(name: string) {
   return !links.value.some((l) => l.kind === 'caves' && l.from === name);
+}
+
+/** 门 prefab → 人话分类 */
+const portalKindLabel: Record<string, string> = {
+  cave_entrance: '地洞入口',
+  cave_entrance_open: '地洞入口',
+  cave_entrance_ruins: '遗迹入口',
+  ruins_entrance: '遗迹入口',
+  cave_exit: '洞穴绳梯',
+  oceanwhirlbigportal: '海洋漩涡',
+  oceanwhirlbigportalexit: '海洋漩涡出口',
+  migration_portal: '传送门',
+};
+
+const portalKindIcon: Record<string, string> = {
+  地洞入口: '🕳',
+  遗迹入口: '🏛',
+  洞穴绳梯: '🪜',
+  海洋漩涡: '🌊',
+  海洋漩涡出口: '🌊',
+  传送门: '🌀',
+};
+
+interface PortalGroup {
+  kind: string;
+  target: string;
+  count: number;
+  ids: string[];
+}
+
+/** 把某个世界的门按「类型 + 去向」归并，并把分片 id 翻译成世界名 */
+function portalGroups(world: DontStarveWorldTopology): PortalGroup[] {
+  const map = new Map<string, PortalGroup>();
+  for (const p of world.portals ?? []) {
+    const kind = portalKindLabel[p.prefab] ?? p.prefab;
+    const target = shardLabel(p.linked_world);
+    const key = `${kind}||${target}`;
+    const g = map.get(key) ?? { kind, target, count: 0, ids: [] };
+    g.count += 1;
+    g.ids.push(p.id);
+    map.set(key, g);
+  }
+  return [...map.values()].sort(
+    (a, b) => b.count - a.count || a.kind.localeCompare(b.kind),
+  );
+}
+
+/** 分片 id → 世界展示名；"0" 表示已封闭 */
+function shardLabel(shardID?: string) {
+  if (!shardID || shardID === '0') {
+    return '已封闭（玩家进不去）';
+  }
+  const w = worlds.value.find((x) => x.shard_id === shardID);
+  if (!w) {
+    return `未知世界 #${shardID}`;
+  }
+  return `${w.alias || w.name}（${roleText[w.role]}）`;
 }
 
 function worldLabel(name: string) {
