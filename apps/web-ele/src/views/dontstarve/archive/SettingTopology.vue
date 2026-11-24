@@ -6,9 +6,9 @@ import type {
   DontStarveTopologyResult,
   DontStarveWorldRole,
 } from '@vben/types';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { ElMessage, ElMessageBox, ElNotification } from 'element-plus';
-import { Delete, Plus, RefreshRight } from '@element-plus/icons-vue';
+import { Delete, Plus, Search, Upload } from '@element-plus/icons-vue';
 import { applyTopology, checkTopology } from '#/api/dontstarve';
 
 const props = defineProps<{ dirty: boolean }>();
@@ -29,47 +29,155 @@ const roleText: Record<DontStarveWorldRole, string> = {
 const topology = ref<DontStarveTopologyResult>();
 const topologyError = ref('');
 const applying = ref(false);
+const querying = ref(false);
+const checked = ref(false);
 
 const links = computed<DontStarveLink[]>(() => archiveRef.value?.links ?? []);
-
+const worlds = computed(() => archiveRef.value?.world ?? []);
 const surfaces = computed(() =>
-  (archiveRef.value?.world ?? []).filter(
-    (w) => w.role === 'primary' || w.role === 'surface',
-  ),
+  worlds.value.filter((w) => w.role === 'primary' || w.role === 'surface'),
 );
-const caves = computed(() =>
-  (archiveRef.value?.world ?? []).filter((w) => w.role === 'caves'),
+const caves = computed(() => worlds.value.filter((w) => w.role === 'caves'));
+
+/** 已经占用了洞穴连接的地表（一张地表只能连一个洞穴） */
+const cavesLinkOwners = computed(
+  () =>
+    new Set(links.value.filter((l) => l.kind === 'caves').map((l) => l.from)),
 );
 
-/** 孤立世界：地上世界没有任何洞穴连接 */
 function isOrphan(name: string) {
   return !links.value.some((l) => l.kind === 'caves' && l.from === name);
 }
 
-function roleOfLink(l: DontStarveLink) {
-  const world = archiveRef.value?.world?.find((w) => w.name === l.from);
-  return world?.role;
+function linkKindOptions() {
+  return (Object.keys(linkKindText) as DontStarveLinkKind[]).map((k) => ({
+    label: linkKindText[k],
+    value: k,
+  }));
 }
 
+/** 某种连接的终点候选 */
+function targetOptions(kind: DontStarveLinkKind, from: string) {
+  if (kind === 'caves') {
+    return caves.value.map((w) => ({ label: w.name, value: w.name }));
+  }
+  return surfaces.value
+    .filter((w) => w.name !== from)
+    .map((w) => ({ label: `${roleText[w.role]} · ${w.name}`, value: w.name }));
+}
+
+function firstTarget(kind: DontStarveLinkKind, from: string) {
+  return targetOptions(kind, from)[0]?.value ?? '';
+}
+
+/** 起点候选：洞穴连接由地表出边，传送门两端都是地表 */
+function sourceOptions(kind: DontStarveLinkKind, self?: DontStarveLink) {
+  return surfaces.value.map((w) => {
+    const usedByOtherCavesLink =
+      kind === 'caves' &&
+      cavesLinkOwners.value.has(w.name) &&
+      self?.from !== w.name;
+    return {
+      label: `${roleText[w.role]} · ${w.name}`,
+      value: w.name,
+      disabled: usedByOtherCavesLink,
+    };
+  });
+}
+
+// ---------------- 新增连接（弹窗，显式选类型） ----------------
+const dialogVisible = ref(false);
+const draft = ref<DontStarveLink>({
+  kind: 'caves',
+  from: '',
+  to: '',
+  order: 0,
+});
+
+function openAddLink() {
+  const hasPortalTarget = surfaces.value.length >= 2;
+  const kind: DontStarveLinkKind = hasPortalTarget ? 'portal' : 'caves';
+  const primary = surfaces.value.find((w) => w.role === 'primary');
+  const from = primary?.name ?? surfaces.value[0]?.name ?? '';
+  draft.value = { kind, from, to: firstTarget(kind, from), order: 0 };
+  dialogVisible.value = true;
+}
+
+function onDraftKindChange() {
+  draft.value.to = firstTarget(draft.value.kind, draft.value.from);
+}
+
+function onDraftFromChange() {
+  if (draft.value.to === draft.value.from) {
+    draft.value.to = firstTarget(draft.value.kind, draft.value.from);
+  }
+}
+
+function confirmAddLink() {
+  const link = draft.value;
+  if (!link.from || !link.to) {
+    ElMessage.warning('请选择起点和终点');
+    return;
+  }
+  if (link.kind === 'portal' && link.from === link.to) {
+    ElMessage.warning('传送门的两端不能是同一个世界');
+    return;
+  }
+  if (link.kind === 'caves' && cavesLinkOwners.value.has(link.from)) {
+    ElMessage.warning(`${link.from} 已经有一条洞穴连接了`);
+    return;
+  }
+  if (!archiveRef.value) {
+    return;
+  }
+  archiveRef.value.links = [...links.value, { ...link, order: 0 }];
+  dialogVisible.value = false;
+  emit('has-changed');
+}
+
+// ---------------- 行内编辑 ----------------
+function onRowKindChange(row: DontStarveLink) {
+  row.to = firstTarget(row.kind, row.from);
+  emit('has-changed');
+}
+
+function onRowFromChange(row: DontStarveLink) {
+  if (
+    row.to === row.from ||
+    !targetOptions(row.kind, row.from).some((o) => o.value === row.to)
+  ) {
+    row.to = firstTarget(row.kind, row.from);
+  }
+  emit('has-changed');
+}
+
+function removeLink(link: DontStarveLink) {
+  if (!archiveRef.value) return;
+  archiveRef.value.links = links.value.filter((l) => l !== link);
+  emit('has-changed');
+}
+
+// ---------------- 查询/应用 ----------------
 async function refreshTopology() {
   topologyError.value = '';
   if (props.dirty) {
     topology.value = undefined;
-    topologyError.value = '有未保存的改动，先点右上角「保存」再看生效状态';
+    checked.value = false;
+    topologyError.value = '有未保存的改动，先点右上角「保存」再查询';
     return;
   }
+  querying.value = true;
   try {
     topology.value = await checkTopology();
+    checked.value = true;
   } catch {
     topology.value = undefined;
-    topologyError.value = '服务未启动，无法读取门的现状';
+    checked.value = false;
+    topologyError.value =
+      '查询失败：服务未启动，或正在启动/收敛中（面板同一时刻只允许一个操作）';
+  } finally {
+    querying.value = false;
   }
-}
-
-function pendingLinkNames(): string[] {
-  return (topology.value?.worlds ?? [])
-    .filter((w) => w.pending > 0)
-    .map((w) => w.world);
 }
 
 async function innerApply() {
@@ -77,11 +185,13 @@ async function innerApply() {
     ElMessage.warning('请先保存配置');
     return;
   }
-  const pending = pendingLinkNames();
+  const pending = (topology.value?.worlds ?? [])
+    .filter((w) => w.pending > 0)
+    .map((w) => w.world);
   try {
     await ElMessageBox.confirm(
       pending.length > 0
-        ? `将把 ${pending.join('、')} 的门重新绑定。在线玩家如果正站在门上，会被送回出生点。`
+        ? `将重新绑定 ${pending.join('、')} 的门；在线玩家如果正站在门上会被送回出生点。`
         : '当前没有待应用的改动，仍要重新下发一遍吗？',
       '应用世界拓扑',
       { type: 'warning', confirmButtonText: '应用', cancelButtonText: '取消' },
@@ -93,6 +203,7 @@ async function innerApply() {
   try {
     const res = await applyTopology();
     topology.value = res;
+    checked.value = true;
     if (res.warnings?.length) {
       ElNotification({
         title: '拓扑已应用（有告警）',
@@ -110,71 +221,35 @@ async function innerApply() {
   } catch {
     ElNotification({
       title: '应用拓扑失败',
-      message: '请查看服务日志',
+      message: '服务可能正在启动/收敛，稍后再试',
       type: 'error',
     });
   } finally {
     applying.value = false;
   }
 }
-
-function addLink() {
-  if (!archiveRef.value) {
-    return;
-  }
-  const surface = surfaces.value[0];
-  const cave = caves.value[0];
-  const kind: DontStarveLinkKind =
-    surface && cave
-      ? // 优先补洞穴连接：没有洞穴连接的地上世界会变成孤立世界
-        surfaces.value.some((w) => isOrphan(w.name))
-        ? 'caves'
-        : 'portal'
-      : 'caves';
-  archiveRef.value.links = [
-    ...links.value,
-    {
-      kind,
-      from: surface?.name ?? '',
-      to: (kind === 'caves' ? cave?.name : surfaces.value[1]?.name) ?? '',
-      order: 0,
-    },
-  ];
-  emit('has-changed');
-}
-
-function removeLink(link: DontStarveLink) {
-  if (!archiveRef.value) {
-    return;
-  }
-  archiveRef.value.links = links.value.filter((l) => l !== link);
-  emit('has-changed');
-}
-
-onMounted(refreshTopology);
 </script>
 
 <template>
   <div
     style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px"
   >
-    <el-button type="primary" :icon="Plus" @click="addLink">
+    <el-button type="primary" :icon="Plus" @click="openAddLink">
       新增连接
     </el-button>
+    <el-button :icon="Search" :loading="querying" @click="refreshTopology">
+      查询状态
+    </el-button>
     <el-button
-      :icon="RefreshRight"
+      :icon="Upload"
       :loading="applying"
       :disabled="props.dirty"
       @click="innerApply"
     >
       应用拓扑
     </el-button>
-    <el-button :icon="RefreshRight" @click="refreshTopology">
-      刷新状态
-    </el-button>
     <span style="font-size: 12px; opacity: 0.65">
-      山洞连接决定「地上洞口 ↔ 地下绳梯」，传送门连接决定「地上 ↔ 地上」；
-      改动保存后点「应用拓扑」才会写进游戏存档
+      「查询状态」会向每个世界读一次门的现状（不自动查询）；改动保存后点「应用拓扑」才写进游戏
     </span>
   </div>
 
@@ -200,35 +275,55 @@ onMounted(refreshTopology);
   />
 
   <el-card shadow="never" style="margin-bottom: 12px">
-    <template #header>连接列表</template>
-    <el-table :data="links" size="small" empty-text="还没有连接">
-      <el-table-column label="类型" width="110">
-        <template #default="{ row }">
-          <el-tag
-            :type="row.kind === 'caves' ? 'warning' : 'primary'"
-            size="small"
-          >
-            {{ linkKindText[row.kind] }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="起点" width="180">
+    <template #header>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <span>连接列表</span>
+        <span style="font-size: 12px; opacity: 0.6">
+          洞穴连接 = 这张地表的洞口通往那个洞穴；传送门连接 =
+          两张地表之间直接互通（双向）
+        </span>
+      </div>
+    </template>
+
+    <el-table
+      :data="links"
+      size="small"
+      empty-text="还没有连接，点左上「新增连接」"
+    >
+      <el-table-column label="类型" width="140">
         <template #default="{ row }">
           <el-select
-            v-model="row.from"
+            v-model="row.kind"
             size="small"
-            @change="emit('has-changed')"
+            @change="onRowKindChange(row)"
           >
             <el-option
-              v-for="w in surfaces"
-              :key="w.name"
-              :label="`${roleText[w.role]} · ${w.name}`"
-              :value="w.name"
+              v-for="opt in linkKindOptions()"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
             />
           </el-select>
         </template>
       </el-table-column>
-      <el-table-column label="终点" width="180">
+      <el-table-column label="起点" width="200">
+        <template #default="{ row }">
+          <el-select
+            v-model="row.from"
+            size="small"
+            @change="onRowFromChange(row)"
+          >
+            <el-option
+              v-for="opt in sourceOptions(row.kind, row)"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+              :disabled="opt.disabled"
+            />
+          </el-select>
+        </template>
+      </el-table-column>
+      <el-table-column label="终点" width="200">
         <template #default="{ row }">
           <el-select
             v-model="row.to"
@@ -236,24 +331,21 @@ onMounted(refreshTopology);
             @change="emit('has-changed')"
           >
             <el-option
-              v-for="w in row.kind === 'caves'
-                ? caves
-                : surfaces.filter((s) => s.name !== row.from)"
-              :key="w.name"
-              :label="`${roleText[w.role]} · ${w.name}`"
-              :value="w.name"
-              :disabled="row.kind === 'portal' && w.name === row.from"
+              v-for="opt in targetOptions(row.kind, row.from)"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
             />
           </el-select>
         </template>
       </el-table-column>
-      <el-table-column label="说明" min-width="220">
+      <el-table-column label="说明" min-width="200">
         <template #default="{ row }">
           <span style="font-size: 12px; opacity: 0.7">
             {{
               row.kind === 'caves'
                 ? '洞口下去到这个洞穴，绳梯回到这张地表'
-                : '两张地表之间直接互通的传送门（双向）'
+                : '两张地表之间直接互通的传送门'
             }}
           </span>
         </template>
@@ -274,7 +366,7 @@ onMounted(refreshTopology);
     </el-table>
 
     <el-alert
-      v-if="surfaces.some((w) => isOrphan(w.name))"
+      v-if="surfaces.some((w) => isOrphan(w.name)) && caves.length > 0"
       type="warning"
       :closable="false"
       show-icon
@@ -286,10 +378,10 @@ onMounted(refreshTopology);
     />
   </el-card>
 
-  <el-card v-if="topology" shadow="never">
-    <template #header>游戏里的门（现状）</template>
+  <el-card v-if="checked && topology" shadow="never">
+    <template #header>游戏里的门（上次查询结果）</template>
     <el-table :data="topology.worlds" size="small">
-      <el-table-column prop="world" label="世界" width="160">
+      <el-table-column prop="world" label="世界" width="180">
         <template #default="{ row }">
           <el-tag size="small" effect="plain">{{ roleText[row.role] }}</el-tag>
           {{ row.world }}
@@ -322,4 +414,55 @@ onMounted(refreshTopology);
       </el-table-column>
     </el-table>
   </el-card>
+
+  <el-dialog v-model="dialogVisible" title="新增连接" width="460px">
+    <el-form label-width="80px">
+      <el-form-item label="类型">
+        <el-radio-group v-model="draft.kind" @change="onDraftKindChange">
+          <el-radio value="caves">洞穴连接</el-radio>
+          <el-radio value="portal" :disabled="surfaces.length < 2"
+            >传送门连接</el-radio
+          >
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="起点">
+        <el-select
+          v-model="draft.from"
+          style="width: 100%"
+          @change="onDraftFromChange"
+        >
+          <el-option
+            v-for="opt in sourceOptions(draft.kind)"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+            :disabled="opt.disabled"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="终点">
+        <el-select v-model="draft.to" style="width: 100%">
+          <el-option
+            v-for="opt in targetOptions(draft.kind, draft.from)"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="效果">
+        <span style="font-size: 12px; opacity: 0.7">
+          {{
+            draft.kind === 'caves'
+              ? `${draft.from} 的洞口会通往 ${draft.to}，${draft.to} 的绳梯回到 ${draft.from}`
+              : `${draft.from} 与 ${draft.to} 之间出现一对互通传送门`
+          }}
+        </span>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="dialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="confirmAddLink">添加</el-button>
+    </template>
+  </el-dialog>
 </template>
