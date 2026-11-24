@@ -116,6 +116,16 @@ interface DontStarveArchive extends Model {
   mods?: DontStarveMod[];
 }
 
+/** 服务器上的存档备份（zip 快照） */
+interface DontStarveArchiveBackup {
+  /** 备份文件名，如 2026-11-24_13-50-00.zip */
+  name: string;
+  /** 文件大小（字节） */
+  size: number;
+  /** 备份创建时间 */
+  created_at: string;
+}
+
 export type {
   DontStarveConfig,
   DontStarveMod,
@@ -129,4 +139,5 @@ export type {
   DontStarveTopologyResult,
   DontStarveWorldStatus,
   DontStarveArchive,
+  DontStarveArchiveBackup,
 };

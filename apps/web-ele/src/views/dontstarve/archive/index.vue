@@ -1,13 +1,21 @@
 <script lang="ts" setup>
-import type { DontStarveArchive, DontStarveConfig } from '@vben/types';
+import type {
+  DontStarveArchive,
+  DontStarveArchiveBackup,
+  DontStarveConfig,
+} from '@vben/types';
 import { onMounted, ref } from 'vue';
 import { Page } from '@vben/common-ui';
 import {
   createArchive,
+  createArchiveBackup,
   deleteArchive,
+  deleteArchiveBackup,
   downloadArchive as downloadArchiveApi,
+  downloadArchiveBackup,
   getConfig,
   listArchive,
+  listArchiveBackups,
   updateConfig,
   uploadArchive,
   uploadArchiveMethod,
@@ -38,6 +46,12 @@ const uploadDialogLoadingRef = ref(false);
 const uploadIdRef = ref<string>();
 const uploadRef = ref<UploadInstance>();
 const uploadFileListRef = ref<UploadUserFile[]>();
+const backupDialogVisibleRef = ref(false);
+const backupArchiveRef = ref<DontStarveArchive>();
+const backupListRef = ref<DontStarveArchiveBackup[]>([]);
+const backupListLoadingRef = ref(false);
+const backupCreatingRef = ref(false);
+const backupDeletingRef = ref<string>();
 onMounted(initialize);
 
 async function initialize() {
@@ -113,6 +127,98 @@ function openUploadDialog(id?: string) {
   uploadFileListRef.value = [];
   uploadDialogVisibleRef.value = true;
 }
+
+async function openBackupDialog(item: DontStarveArchive) {
+  backupArchiveRef.value = item;
+  backupListRef.value = [];
+  backupDialogVisibleRef.value = true;
+  await refreshBackups();
+}
+
+async function refreshBackups() {
+  if (!backupArchiveRef.value) {
+    return;
+  }
+  backupListLoadingRef.value = true;
+  try {
+    backupListRef.value = await listArchiveBackups(backupArchiveRef.value.id);
+  } finally {
+    backupListLoadingRef.value = false;
+  }
+}
+
+async function innerBackupArchive() {
+  if (!backupArchiveRef.value) {
+    return;
+  }
+  backupCreatingRef.value = true;
+  try {
+    const backup = await createArchiveBackup(backupArchiveRef.value.id);
+    await refreshBackups();
+    ElNotification({
+      title: '成功',
+      message: `备份成功：${backup.name}`,
+      type: 'success',
+    });
+  } catch (error: any) {
+    const reason = error?.response?.data?.message ?? error?.message ?? error;
+    ElNotification({
+      title: '失败',
+      message: `备份存档失败: ${reason}`,
+      type: 'error',
+      duration: 0,
+    });
+  } finally {
+    backupCreatingRef.value = false;
+  }
+}
+
+async function innerDeleteBackup(name: string) {
+  if (!backupArchiveRef.value) {
+    return;
+  }
+  backupDeletingRef.value = name;
+  try {
+    await deleteArchiveBackup(backupArchiveRef.value.id, name);
+    await refreshBackups();
+    ElNotification({
+      title: '成功',
+      message: '删除备份成功',
+      type: 'success',
+    });
+  } finally {
+    backupDeletingRef.value = undefined;
+  }
+}
+
+async function downloadBackup(name: string) {
+  if (!backupArchiveRef.value) {
+    return;
+  }
+  try {
+    await downloadArchiveBackup(backupArchiveRef.value.id, name);
+  } catch {
+    ElNotification({
+      title: '失败',
+      message: '下载备份失败',
+      type: 'error',
+    });
+  }
+}
+
+function formatSize(bytes: number) {
+  if (!bytes) {
+    return '0 B';
+  }
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+}
 </script>
 
 <template>
@@ -155,6 +261,64 @@ function openUploadDialog(id?: string) {
             </el-button>
           </div>
         </template>
+      </el-dialog>
+      <el-dialog
+        v-model="backupDialogVisibleRef"
+        title="存档备份"
+        width="760px"
+      >
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <span class="text-sm text-gray-500">
+            备份文件保存在服务器，可下载留存；大型存档打包可能需要一点时间。
+          </span>
+          <el-button
+            type="primary"
+            :loading="backupCreatingRef"
+            @click="innerBackupArchive"
+          >
+            立即备份
+          </el-button>
+        </div>
+        <el-table
+          v-loading="backupListLoadingRef"
+          :data="backupListRef"
+          size="small"
+          empty-text="暂无备份"
+          style="width: 100%"
+        >
+          <el-table-column prop="name" label="备份文件" min-width="220" />
+          <el-table-column label="大小" width="110">
+            <template #default="{ row }">
+              {{ formatSize(row.size) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="创建时间" width="180">
+            <template #default="{ row }">
+              {{ convertTime(row.created_at) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="140" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="downloadBackup(row.name)">
+                下载
+              </el-button>
+              <el-popconfirm
+                title="确认删除该备份？"
+                @confirm="innerDeleteBackup(row.name)"
+              >
+                <template #reference>
+                  <el-button
+                    link
+                    type="danger"
+                    :loading="backupDeletingRef === row.name"
+                  >
+                    删除
+                  </el-button>
+                </template>
+              </el-popconfirm>
+            </template>
+          </el-table-column>
+        </el-table>
       </el-dialog>
       <el-button-group>
         <el-button
@@ -208,6 +372,7 @@ function openUploadDialog(id?: string) {
                   <el-button>下载</el-button>
                 </template>
               </el-popconfirm>
+              <el-button @click="openBackupDialog(item)">备份</el-button>
               <el-button @click="openUploadDialog(item.id)">更新</el-button>
               <el-button @click="settingArchive(item.id)">设置</el-button>
               <el-popconfirm

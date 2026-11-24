@@ -1,6 +1,7 @@
 import type {
   Control,
   DontStarveArchive,
+  DontStarveArchiveBackup,
   DontStarveConfig,
   DontStarveMod,
   DontStarveTopologyResult,
@@ -147,6 +148,48 @@ export async function downloadArchive(id: string) {
   const a = document.createElement('a');
   a.href = url;
   a.download = `${id}.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** 备份列表：服务器上该存档已有的 zip 快照（按时间倒序） */
+export async function listArchiveBackups(id: string) {
+  return requestClient.get<DontStarveArchiveBackup[]>(
+    `${DST}/archives/${id}/backups`,
+  );
+}
+
+/** 在服务器上创建一份完整存档备份 */
+export async function createArchiveBackup(id: string) {
+  return requestClient.post<DontStarveArchiveBackup>(
+    `${DST}/archives/${id}/backup`,
+  );
+}
+
+/** 删除服务器上的某个备份文件 */
+export async function deleteArchiveBackup(id: string, name: string) {
+  return requestClient.delete(
+    `${DST}/archives/${id}/backups/${encodeURIComponent(name)}`,
+  );
+}
+
+/** 下载备份文件（需带 JWT，不能直接 window.open） */
+export async function downloadArchiveBackup(id: string, name: string) {
+  const accessStore = useAccessStore();
+  const resp = await fetch(
+    `/api/v1/dst/archives/${id}/backups/${encodeURIComponent(name)}/download`,
+    {
+      headers: { Authorization: `Bearer ${accessStore.accessToken}` },
+    },
+  );
+  if (!resp.ok) {
+    throw new Error(`download failed: ${resp.status}`);
+  }
+  const blob = await resp.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
   a.click();
   URL.revokeObjectURL(url);
 }
