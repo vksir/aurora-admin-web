@@ -36,7 +36,10 @@ type DontStarveLinkKind = 'caves' | 'portal';
  */
 interface DontStarveWorld {
   type?: string;
+  /** 分片名 = 存档目录名与 -shard 参数，创建后不可修改 */
   name: string;
+  /** 备注名：纯展示，可随意修改（支持中文） */
+  alias?: string;
   role: DontStarveWorldRole;
   shard_id: string;
   port: number;
@@ -70,6 +73,7 @@ interface DontStarvePortal {
 /** 运行期：单个世界的拓扑状态 */
 interface DontStarveWorldTopology {
   world: string;
+  alias?: string;
   role: DontStarveWorldRole;
   portals: DontStarvePortal[];
   pending: number;
@@ -87,6 +91,7 @@ interface DontStarveTopologyResult {
 /** 运行期：单个世界的进程状态 */
 interface DontStarveWorldStatus {
   name: string;
+  alias?: string;
   role: DontStarveWorldRole;
   enabled: boolean;
   port: number;

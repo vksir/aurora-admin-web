@@ -207,7 +207,15 @@ function applyWorldSize(world: DontStarveWorld, size: DontStarveWorldSize) {
           >
             {{ worldRoleToString[roleOf(world) ?? 'surface'] }}
           </el-tag>
-          <span style="flex: 1">{{ world.name }}</span>
+          <span style="flex: 1">
+            {{ world.alias || world.name }}
+            <span
+              v-if="world.alias"
+              style="font-size: 12px; opacity: 0.55; margin-left: 4px"
+            >
+              {{ world.name }}
+            </span>
+          </span>
           <el-switch
             v-model="world.enabled"
             size="small"
@@ -225,7 +233,13 @@ function applyWorldSize(world: DontStarveWorld, size: DontStarveWorldSize) {
           <div style="display: flex; gap: 8px; align-items: center">
             <span>
               {{ worldRoleToString[roleOf(selected) ?? 'surface'] }} ·
-              {{ selected.name }}
+              {{ selected.alias || selected.name }}
+              <span
+                v-if="selected.alias"
+                style="font-size: 12px; opacity: 0.55; margin-left: 4px"
+              >
+                （{{ selected.name }}）
+              </span>
             </span>
             <el-tag v-if="selected.enabled === false" type="info" size="small">
               未启用（不参与启动）
@@ -257,12 +271,26 @@ function applyWorldSize(world: DontStarveWorld, size: DontStarveWorldSize) {
           <el-row>
             <el-col :span="12">
               <el-form-item label="世界名">
+                <el-tooltip
+                  content="世界名是存档目录名与 -shard 参数，创建后不可修改；想换称呼请改备注名"
+                  placement="top"
+                >
+                  <el-input :model-value="selected.name" disabled />
+                </el-tooltip>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="备注名">
                 <el-input
-                  v-model="selected.name"
+                  v-model="selected.alias"
+                  placeholder="随便起，支持中文，仅面板展示"
                   @change="emit('has-changed')"
                 />
               </el-form-item>
             </el-col>
+          </el-row>
+
+          <el-row>
             <el-col :span="12">
               <el-form-item label="世界大小">
                 <el-select
@@ -307,7 +335,7 @@ function applyWorldSize(world: DontStarveWorld, size: DontStarveWorldSize) {
             :closable="false"
             show-icon
             style="margin-bottom: 12px"
-            title="分片 id 与端口由面板分配且不可手改：分片 id 会写进玩家存档与传送门绑定，改了等于换一个世界。世界大小只对还没生成的世界生效，已生成的世界需要重新生成。"
+            title="世界名、分片 id、端口都不可改：世界名是存档目录与 -shard 参数，分片 id 会写进玩家存档与传送门绑定。想换称呼用备注名。世界大小只对还没生成的世界生效。"
           />
 
           <el-form-item label="世界生成">

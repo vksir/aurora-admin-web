@@ -49,6 +49,11 @@ function isOrphan(name: string) {
   return !links.value.some((l) => l.kind === 'caves' && l.from === name);
 }
 
+function worldLabel(name: string) {
+  const w = worlds.value.find((x) => x.name === name);
+  return w?.alias ? `${w.alias}（${name}）` : name;
+}
+
 function linkKindOptions() {
   return (Object.keys(linkKindText) as DontStarveLinkKind[]).map((k) => ({
     label: linkKindText[k],
@@ -59,11 +64,17 @@ function linkKindOptions() {
 /** 某种连接的终点候选 */
 function targetOptions(kind: DontStarveLinkKind, from: string) {
   if (kind === 'caves') {
-    return caves.value.map((w) => ({ label: w.name, value: w.name }));
+    return caves.value.map((w) => ({
+      label: `${roleText[w.role]} · ${w.alias || w.name}`,
+      value: w.name,
+    }));
   }
   return surfaces.value
     .filter((w) => w.name !== from)
-    .map((w) => ({ label: `${roleText[w.role]} · ${w.name}`, value: w.name }));
+    .map((w) => ({
+      label: `${roleText[w.role]} · ${w.alias || w.name}`,
+      value: w.name,
+    }));
 }
 
 function firstTarget(kind: DontStarveLinkKind, from: string) {
@@ -78,7 +89,7 @@ function sourceOptions(kind: DontStarveLinkKind, self?: DontStarveLink) {
       cavesLinkOwners.value.has(w.name) &&
       self?.from !== w.name;
     return {
-      label: `${roleText[w.role]} · ${w.name}`,
+      label: `${roleText[w.role]} · ${w.alias || w.name}`,
       value: w.name,
       disabled: usedByOtherCavesLink,
     };
@@ -373,7 +384,7 @@ async function innerApply() {
       style="margin-top: 12px"
       :title="`孤立世界：${surfaces
         .filter((w) => isOrphan(w.name))
-        .map((w) => w.name)
+        .map((w) => w.alias || w.name)
         .join('、')} 没有洞穴连接，它们的地表洞口会被封闭`"
     />
   </el-card>
@@ -384,7 +395,7 @@ async function innerApply() {
       <el-table-column prop="world" label="世界" width="180">
         <template #default="{ row }">
           <el-tag size="small" effect="plain">{{ roleText[row.role] }}</el-tag>
-          {{ row.world }}
+          {{ row.alias || row.world }}
         </template>
       </el-table-column>
       <el-table-column label="待应用" width="90">
@@ -454,8 +465,8 @@ async function innerApply() {
         <span style="font-size: 12px; opacity: 0.7">
           {{
             draft.kind === 'caves'
-              ? `${draft.from} 的洞口会通往 ${draft.to}，${draft.to} 的绳梯回到 ${draft.from}`
-              : `${draft.from} 与 ${draft.to} 之间出现一对互通传送门`
+              ? `${worldLabel(draft.from)} 的洞口会通往 ${worldLabel(draft.to)}，${worldLabel(draft.to)} 的绳梯回到 ${worldLabel(draft.from)}`
+              : `${worldLabel(draft.from)} 与 ${worldLabel(draft.to)} 之间出现一对互通传送门`
           }}
         </span>
       </el-form-item>
